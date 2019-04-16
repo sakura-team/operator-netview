@@ -4,6 +4,7 @@ ARROW_MARGIN = 7;
 LABEL_OFFSET_Y = 6;
 ARROW_MIN_LENGTH = 10;
 DEFAULT_STROKE_WIDTH = 3;
+ZOOM_FACTOR = 1.1
 
 dragInfo = {
     elem: null,
@@ -177,8 +178,30 @@ function NetGraph() {
         svggraph.setAttributeNS(null, "width", component_w);
         svggraph.setAttributeNS(null, "height", component_h);
     };
+    this.zoom = function(evt) {
+        // center zooming on mouse position
+        let mouse = getMousePosition(evt).svg;
+        if (evt.deltaY > 0) {
+            factor = 1 / ZOOM_FACTOR;
+        }
+        else {
+            factor = ZOOM_FACTOR;
+        }
+
+        let width = this.viewbox.width;
+        let height = this.viewbox.height;
+        let new_width = width * factor;
+        let new_height = height * factor;
+        let offset_x = (mouse.x - this.viewbox.x) * (factor-1);
+        let offset_y = (mouse.y - this.viewbox.y) * (factor-1);
+        this.setViewBox(round2Decimals(this.viewbox.x - offset_x),
+                        round2Decimals(this.viewbox.y - offset_y),
+                        round2Decimals(new_width),
+                        round2Decimals(new_height));
+    };
     let saved_this = this;
     svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
+    svggraph.addEventListener('wheel', function(evt) { saved_this.zoom(evt); });
     this.resize(500, 600);
 }
 

@@ -28,6 +28,10 @@
     stroke-width: 3;
 }
 
+.dragging {
+    cursor: move;
+}
+
 .node-label {
     text-anchor: middle;
     pointer-events: none;

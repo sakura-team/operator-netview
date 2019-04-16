@@ -155,6 +155,8 @@ function NetGraph() {
                         round2Decimals(info.viewbox.y - offset.y),
                         info.viewbox.width,
                         info.viewbox.height);
+        // update zoom rectangle
+        this.updateZoomRect();
     };
     this.onEndDrag = function(info) {
         svggraph.classList.remove("dragging");
@@ -178,6 +180,12 @@ function NetGraph() {
         svggraph.setAttributeNS(null, "width", component_w);
         svggraph.setAttributeNS(null, "height", component_h);
     };
+    this.updateZoomRect = function() {
+        zoomRect.setAttributeNS(null, "x", this.viewbox.x);
+        zoomRect.setAttributeNS(null, "y", this.viewbox.y);
+        zoomRect.setAttributeNS(null, "width", this.viewbox.width);
+        zoomRect.setAttributeNS(null, "height", this.viewbox.height);
+    };
     this.zoom = function(evt) {
         // center zooming on mouse position
         let mouse = getMousePosition(evt).svg;
@@ -198,6 +206,7 @@ function NetGraph() {
                         round2Decimals(this.viewbox.y - offset_y),
                         round2Decimals(new_width),
                         round2Decimals(new_height));
+        this.updateZoomRect();
     };
     let saved_this = this;
     svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
@@ -267,6 +276,11 @@ function initZoomControls() {
     zoomSvgGraph.setAttributeNS(null, "class", "zoom-svggraph");
     zoomSvgGraph.setAttributeNS(null, "width", zoomSvgGraph.getAttributeNS(null, "width")/4);
     zoomSvgGraph.setAttributeNS(null, "height", zoomSvgGraph.getAttributeNS(null, "height")/4);
+    /* add zoom rect */
+    zoomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    zoomRect.id = 'zoom-rect';
+    zoomRect.setAttributeNS(null, 'class', 'zoom-rect');
+    zoomSvgGraph.appendChild(zoomRect);
 }
 
 function initJs() {

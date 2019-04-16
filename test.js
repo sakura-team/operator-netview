@@ -259,4 +259,9 @@ function initJs() {
     let arrow32 = new Arrow(n3, n2);
 
     arrows = [ arrow12, arrow32 ];
+
+    window.addEventListener('wheel', function (evt) {
+        console.log('wheel!', evt);
+    });
 }
+

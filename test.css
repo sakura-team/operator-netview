@@ -1,0 +1,81 @@
+#leftrow {
+    background: lightgrey;
+    width: 70%;
+    position: relative;
+}
+#rightrow {
+    background: grey;
+    width: 30%;
+}
+.svggraph {
+    max-width: 100%;
+    max-height: 100%;
+}
+.zoom-svggraph {
+    pointer-events: none;
+}
+.node {
+    stroke: black;
+    stroke-width: 2;
+    fill: red;
+    cursor: move;
+    transition: stroke-width 0.2s;
+    filter: drop-shadow(3px 3px 2px red);
+}
+
+.node:hover {
+    stroke: grey;
+    stroke-width: 3;
+}
+
+.node-label {
+    text-anchor: middle;
+    pointer-events: none;
+}
+.arrow {
+    stroke: grey;
+    fill: none;
+    marker-end: url(#arrow-head);
+}
+.arrow-head-path {
+    fill: grey;
+}
+
+.infobox {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: rgba(255,255,255,0.6);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    text-align: right;
+    color: #777;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 1;
+}
+
+/* https://www.w3schools.com/howto/howto_js_scroll_indicator.asp */
+
+/* Style the header: fixed position (always stay at the top) */
+.header {
+  position: fixed;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  background-color: #f1f1f1;
+}
+
+/* The progress container (grey background) */
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background: #ccc;
+}
+
+/* The progress bar (scroll indicator) */
+.progress-bar {
+  height: 8px;
+  background: #4caf50;
+  width: 0%;
+}

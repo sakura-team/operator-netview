@@ -1,0 +1,36 @@
+<html style="height:100%;">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="test.css">
+        <script src="test.js"></script>
+    </head>
+    <body onload="initJs()">
+        <div class="container-fluid">
+            <div class="row h-100">
+                <div id="leftrow" class="h-100">
+                  <div id="svgdiv" class="h-100">
+                    <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                      <defs>
+                        <marker id='arrow-head' orient="auto"
+                          markerWidth='2' markerHeight='4'
+                          refX='0.1' refY='2'>
+                          <!-- triangle pointing right (+x) -->
+                          <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
+                        </marker>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div class="infobox">
+                    zoom parameters
+                    <div id='zoom-svgdiv' width="25%" height="25%"></div>
+                  </div>
+                </div>
+                <div id="rightrow" class="h-100">
+                  https://www.w3schools.com/howto/howto_js_scroll_indicator.asp
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+

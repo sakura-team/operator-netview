@@ -4,7 +4,8 @@ ARROW_MARGIN = 7;
 LABEL_OFFSET_Y = 6;
 ARROW_MIN_LENGTH = 10;
 DEFAULT_STROKE_WIDTH = 3;
-ZOOM_FACTOR = 1.1
+ZOOM_FACTOR = 1.1;
+AUTOSIZE_MARGIN = 50;
 
 dragInfo = {
     elem: null,
@@ -127,20 +128,31 @@ function Node(x, y, label) {
     return this;
 }
 
-function NetGraph() {
+function NetGraph(svggraph) {
+    this.svggraph = svggraph;
     this.viewbox = null;
     this.getViewBox = function() {
         return this.viewbox;
     };
     this.setViewBox = function(x, y, width, height) {
         this.viewbox = { x: x, y: y, width: width, height: height };
-        svggraph.setAttributeNS(null, "viewBox",
+        this.svggraph.setAttributeNS(null, "viewBox",
                     x + " " + y + " " + width + " " + height);
     };
+    this.getSize = function() {
+        return {
+            width: this.svggraph.getAttributeNS(null, "width"),
+            height: this.svggraph.getAttributeNS(null, "height")
+        }
+    };
+    this.setSize = function(width, height) {
+        this.svggraph.setAttributeNS(null, "width", width);
+        this.svggraph.setAttributeNS(null, "height", height);
+    }
     this.onStartDrag = function(mousePos) {
-        svggraph.classList.add("dragging");
+        this.svggraph.classList.add("dragging");
         return { mouseStart:    mousePos.svg,
-                 ctm:           svggraph.getScreenCTM(),
+                 ctm:           this.svggraph.getScreenCTM(),
                  viewbox:       this.viewbox };
     };
     this.onDrag = function(info, mousePos) {
@@ -155,36 +167,81 @@ function NetGraph() {
                         round2Decimals(info.viewbox.y - offset.y),
                         info.viewbox.width,
                         info.viewbox.height);
-        // update zoom rectangle
-        this.updateZoomRect();
+        // update zoom
+        updateZoomView();
     };
     this.onEndDrag = function(info) {
-        svggraph.classList.remove("dragging");
+        this.svggraph.classList.remove("dragging");
     };
-    this.resize = function(maxX, maxY) {
-        let div = document.querySelector("#leftrow");
-        let component_w = div.scrollWidth;
-        let component_h = div.scrollHeight;
-        let viewbox_w, viewbox_h;
-        if (maxX/component_w > maxY/component_h) {
-            // compute size based on width
-            viewbox_w = maxX;
-            viewbox_h = Math.floor((maxX * component_h) / component_w);
+    this.autoSizeFillParent = function() {
+        let div = this.svggraph.parentNode;
+        this.autoSize(div.scrollWidth, div.scrollHeight, true, null);
+    }
+    this.autoSize = function(max_w, max_h, fill, areaBounds) {
+        let viewbox = {}, area, component = {}, c;
+        if (areaBounds == null) {
+            areaBounds = { min: {x: null, y:null}, max: {x: null, y:null} };
+        }
+        area = areaBounds;
+
+        // compute drawing area
+        for (node of nodes) {
+            c = node.getCenter();
+            area.min.x = (area.min.x == null) ? c.x : Math.min(area.min.x, c.x);
+            area.max.x = (area.max.x == null) ? c.x : Math.max(area.max.x, c.x);
+            area.min.y = (area.min.y == null) ? c.y : Math.min(area.min.y, c.y);
+            area.max.y = (area.max.y == null) ? c.y : Math.max(area.max.y, c.y);
+        }
+        area.min.x -= AUTOSIZE_MARGIN;
+        area.min.y -= AUTOSIZE_MARGIN;
+        area.max.x += AUTOSIZE_MARGIN;
+        area.max.y += AUTOSIZE_MARGIN;
+        area.w = area.max.x - area.min.x;
+        area.h = area.max.y - area.min.y;
+        // compute viewbox and component size
+        if (fill) {
+            component.w = max_w;
+            component.h = max_h;
+            // check whether we are more limited on width or on height
+            if (area.w/max_w > area.h/max_h) {
+                // compute size based on width
+                viewbox.x = area.min.x;
+                viewbox.w = area.w;
+                viewbox.h = Math.floor((area.w * max_h) / max_w);
+                viewbox.y = area.min.y - ((viewbox.h - area.h) / 2);
+            }
+            else {
+                // compute size based on height
+                viewbox.y = area.min.y;
+                viewbox.h = area.h;
+                viewbox.w = Math.floor((area.h * max_w) / max_h);
+                viewbox.x = area.min.x - ((viewbox.w - area.w) / 2);
+            }
         }
         else {
-            // compute size based on height
-            viewbox_h = maxY;
-            viewbox_w = Math.floor((maxY * component_w) / component_h);
+            // do not fill available room, preserve aspect ratio
+            viewbox.x = area.min.x;
+            viewbox.y = area.min.y;
+            viewbox.w = area.w;
+            viewbox.h = area.h;
+            // check whether we are more limited on width or on height
+            if (area.w/max_w > area.h/max_h) {
+                // compute size based on width
+                component.w = max_w;
+                component.h = (area.h*component.w) / area.w;
+            }
+            else {
+                // compute size based on height
+                component.h = max_h;
+                component.w = (area.w*component.h) / area.h;
+            }
         }
-        this.setViewBox(0, 0, viewbox_w, viewbox_h);
-        svggraph.setAttributeNS(null, "width", component_w);
-        svggraph.setAttributeNS(null, "height", component_h);
+        // update component attributes
+        this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
+        this.setSize(component.w, component.h);
     };
     this.updateZoomRect = function() {
-        zoomRect.setAttributeNS(null, "x", this.viewbox.x);
-        zoomRect.setAttributeNS(null, "y", this.viewbox.y);
-        zoomRect.setAttributeNS(null, "width", this.viewbox.width);
-        zoomRect.setAttributeNS(null, "height", this.viewbox.height);
+        zoomRect.setShape(this.viewbox);
     };
     this.zoom = function(evt) {
         // center zooming on mouse position
@@ -206,18 +263,17 @@ function NetGraph() {
                         round2Decimals(this.viewbox.y - offset_y),
                         round2Decimals(new_width),
                         round2Decimals(new_height));
-        this.updateZoomRect();
+        updateZoomView();
     };
     let saved_this = this;
-    svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
-    svggraph.addEventListener('wheel', function(evt) { saved_this.zoom(evt); });
-    this.resize(500, 600);
+    this.svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
+    this.svggraph.addEventListener('wheel', function(evt) { saved_this.zoom(evt); });
 }
 
 function initNetGraph() {
     svggraph = document.querySelector("#svggraph");
-    netGraph = new NetGraph();
-    initZoomControls();
+    netGraph = new NetGraph(svggraph);
+    return netGraph;
 }
 
 function Arrow(node1, node2) {
@@ -263,7 +319,28 @@ function Arrow(node1, node2) {
     return this;
 }
 
-function initZoomControls() {
+function initZoomRect(zoomSvgGraph) {
+    zoomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    zoomRect.id = 'zoom-rect';
+    zoomRect.setAttributeNS(null, 'class', 'zoom-rect');
+    zoomRect.getShape = function() {
+        return {
+            x: parseFloat(zoomRect.getAttributeNS(null, "x")),
+            y: parseFloat(zoomRect.getAttributeNS(null, "y")),
+            width: parseFloat(zoomRect.getAttributeNS(null, "width")),
+            height: parseFloat(zoomRect.getAttributeNS(null, "height"))
+        };
+    };
+    zoomRect.setShape = function(shape) {
+        zoomRect.setAttributeNS(null, "x", shape.x);
+        zoomRect.setAttributeNS(null, "y", shape.y);
+        zoomRect.setAttributeNS(null, "width", shape.width);
+        zoomRect.setAttributeNS(null, "height", shape.height);
+    };
+    zoomSvgGraph.appendChild(zoomRect);
+}
+
+function initZoomNetGraph() {
     /* copy main svg content to small one of zoom controls */
     let svgContent = document.querySelector("#svgdiv").innerHTML;
     let zoomSvgdiv = document.querySelector("#zoom-svgdiv");
@@ -274,17 +351,35 @@ function initZoomControls() {
     zoomSvgGraph.id = 'zoom-svggraph';
     /* resize */
     zoomSvgGraph.setAttributeNS(null, "class", "zoom-svggraph");
-    zoomSvgGraph.setAttributeNS(null, "width", zoomSvgGraph.getAttributeNS(null, "width")/4);
-    zoomSvgGraph.setAttributeNS(null, "height", zoomSvgGraph.getAttributeNS(null, "height")/4);
     /* add zoom rect */
-    zoomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    zoomRect.id = 'zoom-rect';
-    zoomRect.setAttributeNS(null, 'class', 'zoom-rect');
-    zoomSvgGraph.appendChild(zoomRect);
+    initZoomRect(zoomSvgGraph);
+    /* create and return NetGraph object */
+    zoomNetGraph = new NetGraph(zoomSvgGraph);
+    return zoomNetGraph;
+}
+
+function updateZoomView() {
+    netGraph.updateZoomRect();
+    let netGraphSize = netGraph.getSize();
+    // zoomNetGraph viewbox should be large enough to show the zoom rectangle
+    let shape = zoomRect.getShape();
+    let bounds = {  min: { x: shape.x,
+                           y: shape.y },
+                    max: { x: shape.x + shape.width,
+                           y: shape.y + shape.height }
+                 };
+    zoomNetGraph.autoSize(netGraphSize.width/5, netGraphSize.height/5, false, bounds);
+}
+
+function autoSize() {
+    netGraph.autoSizeFillParent();
+    updateZoomView();
 }
 
 function initJs() {
-    initNetGraph();
+    window.addEventListener('resize', autoSize);
+    netGraph = initNetGraph();
+    zoomNetGraph = initZoomNetGraph();
 
     let n1 = new Node(250, 250, "N1");
     let n2 = new Node(350, 350, "N2");
@@ -296,4 +391,5 @@ function initJs() {
     let arrow32 = new Arrow(n3, n2);
 
     arrows = [ arrow12, arrow32 ];
+    autoSize();
 }

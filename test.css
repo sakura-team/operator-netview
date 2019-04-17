@@ -13,7 +13,6 @@
 }
 .zoom-svggraph {
     pointer-events: none;
-    border-style: solid;
 }
 .zoom-rect {
     fill: none;

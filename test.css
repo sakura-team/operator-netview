@@ -1,17 +1,29 @@
-#leftrow {
+#netcol {
     background: lightgrey;
     width: 70%;
     position: relative;
 }
-#rightrow {
+#tracescol {
     background: grey;
     width: 30%;
+    display: flex;
 }
-.svggraph {
+#slidecol {
+    width: 50px;
+    background: grey;
+}
+#tablecol {
+    background: grey;
+    flex-grow: 1;
+}
+#table-1 {
+    margin-top: 5px;
+}
+#svggraph {
     max-width: 100%;
     max-height: 100%;
 }
-.zoom-svggraph {
+#zoom-svggraph {
     pointer-events: none;
 }
 .zoom-rect {

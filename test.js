@@ -74,7 +74,7 @@ function Node(x, y, label) {
     this.draggingOffset = null;
     this.linkedArrows = [];
     let saved_this = this;
-    for (svg of document.querySelectorAll("svg")) {
+    for (svg of document.querySelectorAll(".svggraph")) {
         let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttributeNS(null, 'r', NODE_RADIUS);
         circle.setAttributeNS(null, 'class', 'node');
@@ -280,7 +280,7 @@ function Arrow(node1, node2) {
     this.node1 = node1;
     this.node2 = node2;
     this.paths = [];
-    for (svg of document.querySelectorAll("svg")) {
+    for (svg of document.querySelectorAll(".svggraph")) {
         let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttributeNS(null, 'class', 'arrow');
         this.paths.push(path);
@@ -349,8 +349,6 @@ function initZoomNetGraph() {
     let zoomSvgGraph = zoomSvgdiv.getElementsByTagNameNS("http://www.w3.org/2000/svg", "svg")[0];
     /* update element ID */
     zoomSvgGraph.id = 'zoom-svggraph';
-    /* resize */
-    zoomSvgGraph.setAttributeNS(null, "class", "zoom-svggraph");
     /* add zoom rect */
     initZoomRect(zoomSvgGraph);
     /* create and return NetGraph object */

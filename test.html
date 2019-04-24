@@ -2,34 +2,148 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"/>
+        <link defer rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="test.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
         <script src="test.js"></script>
     </head>
     <body onload="initJs()">
         <div class="container-fluid">
             <div class="row h-100">
-                <div id="leftrow" class="h-100">
-                  <div id="svgdiv" class="h-100">
-                    <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-                      <defs>
-                        <marker id='arrow-head' orient="auto"
-                          markerWidth='2' markerHeight='4'
-                          refX='0.1' refY='2'>
-                          <!-- triangle pointing right (+x) -->
-                          <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
-                        </marker>
-                      </defs>
-                    </svg>
-                  </div>
-                  <div class="zoom-control-box">
-                    <h5>Zoom Control</h5>
-                    <hr/>
-                    <div id='zoom-svgdiv'></div>
-                    <button onclick="autoSize()" class="btn btn-primary">Reset</button>
-                  </div>
+                <div id="netcol" class="h-100">
+                    <div id="svgdiv" class="h-100">
+                        <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                            <defs>
+                            <marker id='arrow-head' orient="auto"
+                                                    markerWidth='2' markerHeight='4'
+                                                    refX='0.1' refY='2'>
+                            <!-- triangle pointing right (+x) -->
+                            <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
+                            </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="zoom-control-box">
+                        <h5>Zoom Control</h5>
+                        <hr/>
+                        <div id='zoom-svgdiv'></div>
+                        <button onclick="autoSize()" class="btn btn-primary">Reset</button>
+                    </div>
                 </div>
-                <div id="rightrow" class="h-100">
-                  https://www.w3schools.com/howto/howto_js_scroll_indicator.asp
+                <div id="tracescol" class="h-100">
+                    <div class="container-fluid">
+                        <div class="row h-100">
+                            <div id="slidecol" class="h-100">
+                                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 100">
+                                    <path stroke-width="2" d='M5,5 L5,95' stroke="black" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div id="tablecol" class="h-100">
+                                <table id="table-1" class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Timestamp</th>
+                                            <th scope="col">Node</th>
+                                            <th scope="col">Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="3" align="center"><i class="fa fa-angle-double-up"></i></td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td>12:46.553</td>
+                                            <td>N1</td>
+                                            <td>MoveTo: 223 555</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3" align="center"><i class="fa fa-angle-double-down"></i></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

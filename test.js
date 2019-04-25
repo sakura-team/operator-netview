@@ -8,8 +8,7 @@ ZOOM_FACTOR = 1.1;
 AUTOSIZE_MARGIN = 50;
 
 dragInfo = {
-    elem: null,
-    offset: null
+    elem: null
 };
 
 function round2Decimals(f) {
@@ -22,49 +21,48 @@ function svgStartDrag(evt, elem) {
         // dragging already handled by an element with higher z-index
         return;
     }
-    let mousePos = getMousePosition(evt);
-    let info = elem.onStartDrag(mousePos);
-    dragInfo = {
-        elem: elem,
-        info: info
-    };
-    svggraph.addEventListener('mousemove', svgDrag);
-    svggraph.addEventListener('mouseup', svgEndDrag);
-    svggraph.addEventListener('mouseleave', svgEndDrag);
+    let svg = evt.target;
+    while (svg.tagName != 'svg') {
+        svg = svg.parentNode;
+    }
+    let mousePos = getMousePosition(evt, svg);
+    dragInfo = elem.onStartDrag(mousePos);
+    dragInfo.elem = elem;
+    dragInfo.svg = svg;
+    window.addEventListener('mousemove', svgDrag);
+    window.addEventListener('mouseup', svgEndDrag);
+    window.addEventListener('mouseleave', svgEndDrag);
 }
 
 function svgDrag(evt) {
     evt.preventDefault();
     // call element's custom callback
-    let mousePos = getMousePosition(evt);
-    dragInfo.elem.onDrag(dragInfo.info, mousePos);
+    let mousePos = getMousePosition(evt, dragInfo.svg);
+    dragInfo.elem.onDrag(dragInfo, mousePos);
 }
 
 function svgEndDrag() {
-    dragInfo.elem.onEndDrag(dragInfo.info);
+    dragInfo.elem.onEndDrag(dragInfo);
     dragInfo.elem = null;
-    svggraph.removeEventListener('mousemove', svgDrag);
-    svggraph.removeEventListener('mouseup', svgEndDrag);
-    svggraph.removeEventListener('mouseleave', svgEndDrag);
+    window.removeEventListener('mousemove', svgDrag);
+    window.removeEventListener('mouseup', svgEndDrag);
+    window.removeEventListener('mouseleave', svgEndDrag);
 }
 
 function pixelsToSvg(ctm, x, y) {
-    if (ctm == null) {
-        ctm = svggraph.getScreenCTM();
-    }
     return {
         x: (x - ctm.e) / ctm.a,
         y: (y - ctm.f) / ctm.d
     }
 }
 
-function getMousePosition(evt) {
+function getMousePosition(evt, svg) {
     return {
         pixels: {
             x: evt.clientX,
             y: evt.clientY
         },
-        svg: pixelsToSvg(null, evt.clientX, evt.clientY)
+        svg: pixelsToSvg(svg.getScreenCTM(), evt.clientX, evt.clientY)
     };
 }
 
@@ -245,7 +243,7 @@ function NetGraph(svggraph) {
     };
     this.zoom = function(evt) {
         // center zooming on mouse position
-        let mouse = getMousePosition(evt).svg;
+        let mouse = getMousePosition(evt, this.svggraph).svg;
         if (evt.deltaY > 0) {
             factor = 1 / ZOOM_FACTOR;
         }
@@ -274,6 +272,80 @@ function initNetGraph() {
     svggraph = document.querySelector("#svggraph");
     netGraph = new NetGraph(svggraph);
     return netGraph;
+}
+
+function Slider(svgslider) {
+    this.svgslider = svgslider;
+    this.value = 0.5;
+    this.sliderline = document.querySelector("#sliderline");
+    this.slidercircle = document.querySelector("#slidercircle");
+    this.viewbox = null;
+    this.getViewBox = function() {
+        return this.viewbox;
+    };
+    this.setViewBox = function(x, y, width, height) {
+        this.viewbox = { x: x, y: y, width: width, height: height };
+        this.svgslider.setAttributeNS(null, "viewBox",
+                    x + " " + y + " " + width + " " + height);
+    };
+    this.getSize = function() {
+        return {
+            width: this.svgslider.getAttributeNS(null, "width"),
+            height: this.svgslider.getAttributeNS(null, "height")
+        }
+    };
+    this.setSize = function(width, height) {
+        this.svgslider.setAttributeNS(null, "width", width);
+        this.svgslider.setAttributeNS(null, "height", height);
+    }
+    this.onStartDrag = function(mousePos) {
+        console.log({ mouseStart:    mousePos.svg,
+                 valueStart:    this.value });
+        return { mouseStart:    mousePos.svg,
+                 valueStart:    this.value };
+    };
+    this.onDrag = function(info, mousePos) {
+        console.log(info, mousePos);
+        // compute mouse offset
+        let offset = mousePos.svg.y - info.mouseStart.y;
+        // compute and set new value
+        this.value = info.valueStart + offset / this.getSliderMaxY();
+        this.value = Math.max(0, this.value);
+        this.value = Math.min(1, this.value);
+        // redraw
+        this.redraw();
+    };
+    this.onEndDrag = function(info) {
+    };
+    this.autoSize = function() {
+        let div = this.svgslider.parentNode;
+        let viewbox = {}, area, component = { w: div.scrollWidth, h: div.scrollHeight }, c;
+        // compute size to preserve aspect ratio
+        viewbox.x = -5;
+        viewbox.y = -5;
+        viewbox.w = 10;
+        viewbox.h = Math.floor((component.h * viewbox.w) / component.w);
+        // update viewbox
+        this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
+        // redraw slider elements
+        this.redraw();
+    };
+    this.getSliderMaxY = function() {
+        return this.viewbox.height - 10;
+    };
+    this.redraw = function() {
+        this.sliderline.setAttributeNS(null, 'd', "M0,0 L0," + this.getSliderMaxY());
+        this.slidercircle.setAttributeNS(null, 'cy', this.value * this.getSliderMaxY());
+    };
+    let saved_this = this;
+    this.slidercircle.addEventListener('mousedown', function(evt) {
+                        svgStartDrag(evt, saved_this); });
+}
+
+function initSlider() {
+    svgslider = document.querySelector("#svgslider");
+    slider = new Slider(svgslider);
+    return slider;
 }
 
 function Arrow(node1, node2) {
@@ -372,12 +444,14 @@ function updateZoomView() {
 function autoSize() {
     netGraph.autoSizeFillParent();
     updateZoomView();
+    slider.autoSize();
 }
 
 function initJs() {
     window.addEventListener('resize', autoSize);
     netGraph = initNetGraph();
     zoomNetGraph = initZoomNetGraph();
+    slider = initSlider();
 
     let n1 = new Node(250, 250, "N1");
     let n2 = new Node(350, 350, "N2");

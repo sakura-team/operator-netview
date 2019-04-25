@@ -4,7 +4,6 @@
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"/>
         <link defer rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="test.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
         <script src="test.js"></script>
     </head>
     <body onload="initJs()">
@@ -34,8 +33,9 @@
                     <div class="container-fluid">
                         <div class="row h-100">
                             <div id="slidecol" class="h-100">
-                                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 100">
-                                    <path stroke-width="2" d='M5,5 L5,95' stroke="black" stroke-linecap="round"/>
+                                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
+                                    <path id="sliderline" d='M0,0 L0,100'/>
+                                    <circle id="slidercircle" r=3 cx="0" cy="15"/>
                                 </svg>
                             </div>
                             <div id="tablecol" class="h-100">

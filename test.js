@@ -5,7 +5,8 @@ LABEL_OFFSET_Y = 6;
 ARROW_MIN_LENGTH = 10;
 DEFAULT_STROKE_WIDTH = 3;
 ZOOM_FACTOR = 1.1;
-AUTOSIZE_MARGIN = 50;
+AUTOSIZE_MARGIN_PERCENT = 10;
+EXPECTED_VIEWBOX_PIXEL_SIZE = 1.5;   // size in screen pixels of a viewbox unit
 
 dragInfo = {
     elem: null
@@ -13,6 +14,36 @@ dragInfo = {
 
 function round2Decimals(f) {
     return Math.round(f * 100) / 100;
+}
+
+function getMinMax(points) {
+    let p, bounds = null;
+    for (p of points) {
+        if (bounds == null) {
+            bounds = { min: {x:p.x, y:p.y}, max: {x:p.x, y:p.y} };
+        }
+        else {
+            bounds.min.x = Math.min(bounds.min.x, p.x);
+            bounds.max.x = Math.max(bounds.max.x, p.x);
+            bounds.min.y = Math.min(bounds.min.y, p.y);
+            bounds.max.y = Math.max(bounds.max.y, p.y);
+        }
+    }
+    return bounds;
+}
+
+function scale(scaling, userCoordinates) {
+    return {
+        x: parseInt(scaling.center.x + scaling.factor * (userCoordinates.x - scaling.center.x), 10),
+        y: parseInt(scaling.center.y + scaling.factor * (userCoordinates.y - scaling.center.y), 10)
+    };
+}
+
+function unscale(scaling, displayCoordinates) {
+    return {
+        x: round2Decimals((displayCoordinates.x - scaling.center.x) / scaling.factor + scaling.center.x),
+        y: round2Decimals((displayCoordinates.y - scaling.center.y) / scaling.factor + scaling.center.y)
+    };
 }
 
 function svgStartDrag(evt, elem) {
@@ -69,8 +100,13 @@ function getMousePosition(evt, svg) {
 function Node(x, y, label) {
     this.circles = [];
     this.texts = [];
-    this.draggingOffset = null;
     this.linkedArrows = [];
+    this.label = label;
+    this.coordinates = {
+        user: {x:x, y:y},
+        display: {x:x, y:y},
+        scaling: {center: { x:0, y:0 }, factor: 1}
+    };
     let saved_this = this;
     for (svg of document.querySelectorAll(".svggraph")) {
         let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -85,44 +121,49 @@ function Node(x, y, label) {
         svg.appendChild(circle);
         svg.appendChild(text);
     }
-    this.onStartDrag = function(mousePos) {
-        let center = this.getCenter();
-        let offset = {
-            x: mousePos.svg.x - center.x,
-            y: mousePos.svg.y - center.y
-        };
-        return { offset: offset };
+    this.setScaling = function(scaling) {
+        this.coordinates.scaling = scaling;
+        this.coordinates.display = scale(scaling, this.coordinates.user);
+        this.redraw();
     };
-    this.onDrag = function(info, mousePos) {
-        // move center
-        this.setCenter({
-            x: round2Decimals(mousePos.svg.x - info.offset.x),
-            y: round2Decimals(mousePos.svg.y - info.offset.y),
-        });
+    this.redraw = function() {
+        for (circle of this.circles) {
+            circle.setAttributeNS(null, 'cx', this.coordinates.display.x);
+            circle.setAttributeNS(null, 'cy', this.coordinates.display.y);
+        }
+        for (text of this.texts) {
+            text.setAttributeNS(null, 'x', this.coordinates.display.x);
+            text.setAttributeNS(null, 'y', this.coordinates.display.y + LABEL_OFFSET_Y);
+        }
         // redraw linked arrows
         this.linkedArrows.forEach(function(arrow) {
             arrow.redraw();
         });
     };
+    this.onStartDrag = function(mousePos) {
+        let offset = {
+            x: mousePos.svg.x - this.coordinates.display.x,
+            y: mousePos.svg.y - this.coordinates.display.y
+        };
+        return { offset: offset };
+    };
+    this.onDrag = function(info, mousePos) {
+        // move center
+        this.coordinates.display = {
+            x: round2Decimals(mousePos.svg.x - info.offset.x),
+            y: round2Decimals(mousePos.svg.y - info.offset.y),
+        };
+        // redraw
+        this.redraw();
+    };
     this.onEndDrag = function(info) {
+        // refresh user coordinates from display coordinates
+        this.coordinates.user = unscale(this.coordinates.scaling, this.coordinates.display);
     };
     this.getCenter = function() {
-        return {
-            x: parseInt(this.circles[0].getAttributeNS(null, 'cx'), 10),
-            y: parseInt(this.circles[0].getAttributeNS(null, 'cy'), 10)
-        };
+        return this.coordinates.display;
     };
-    this.setCenter = function(c) {
-        for (circle of this.circles) {
-            circle.setAttributeNS(null, 'cx', c.x);
-            circle.setAttributeNS(null, 'cy', c.y);
-        }
-        for (text of this.texts) {
-            text.setAttributeNS(null, 'x', c.x);
-            text.setAttributeNS(null, 'y', c.y + LABEL_OFFSET_Y);
-        }
-    };
-    this.setCenter({x: x, y: y});
+    this.redraw();
     return this;
 }
 
@@ -137,11 +178,12 @@ function NetGraph(svggraph) {
         this.svggraph.setAttributeNS(null, "viewBox",
                     x + " " + y + " " + width + " " + height);
     };
-    this.getSize = function() {
+    this.getContainerSize = function() {
+        let div = this.svggraph.parentNode;
         return {
-            width: this.svggraph.getAttributeNS(null, "width"),
-            height: this.svggraph.getAttributeNS(null, "height")
-        }
+            w: div.scrollWidth,
+            h: div.scrollHeight
+        };
     };
     this.setSize = function(width, height) {
         this.svggraph.setAttributeNS(null, "width", width);
@@ -166,77 +208,51 @@ function NetGraph(svggraph) {
                         info.viewbox.width,
                         info.viewbox.height);
         // update zoom
-        updateZoomView();
+        app.updateZoomView();
     };
     this.onEndDrag = function(info) {
         this.svggraph.classList.remove("dragging");
     };
-    this.autoSizeFillParent = function() {
-        let div = this.svggraph.parentNode;
-        this.autoSize(div.scrollWidth, div.scrollHeight, true, null);
-    }
-    this.autoSize = function(max_w, max_h, fill, areaBounds) {
-        let viewbox = {}, area, component = {}, c;
-        if (areaBounds == null) {
-            areaBounds = { min: {x: null, y:null}, max: {x: null, y:null} };
-        }
-        area = areaBounds;
-
-        // compute drawing area
-        for (node of nodes) {
-            c = node.getCenter();
-            area.min.x = (area.min.x == null) ? c.x : Math.min(area.min.x, c.x);
-            area.max.x = (area.max.x == null) ? c.x : Math.max(area.max.x, c.x);
-            area.min.y = (area.min.y == null) ? c.y : Math.min(area.min.y, c.y);
-            area.max.y = (area.max.y == null) ? c.y : Math.max(area.max.y, c.y);
-        }
-        area.min.x -= AUTOSIZE_MARGIN;
-        area.min.y -= AUTOSIZE_MARGIN;
-        area.max.x += AUTOSIZE_MARGIN;
-        area.max.y += AUTOSIZE_MARGIN;
-        area.w = area.max.x - area.min.x;
-        area.h = area.max.y - area.min.y;
-        // compute viewbox and component size
+    this.resize = function(area, fill) {
+        let viewbox = {}, svg = {};
+        // compute viewbox and svg size
         if (fill) {
-            component.w = max_w;
-            component.h = max_h;
+            svg.w = area.limits.w;
+            svg.h = area.limits.h;
             // check whether we are more limited on width or on height
-            if (area.w/max_w > area.h/max_h) {
+            if (area.limitation == 'width') {
                 // compute size based on width
-                viewbox.x = area.min.x;
-                viewbox.w = area.w;
-                viewbox.h = Math.floor((area.w * max_h) / max_w);
+                viewbox.x = area.min.x - area.margin;
+                viewbox.w = area.w + 2*area.margin;
+                viewbox.h = Math.floor((viewbox.w * area.limits.h) / area.limits.w);
                 viewbox.y = area.min.y - ((viewbox.h - area.h) / 2);
             }
             else {
                 // compute size based on height
-                viewbox.y = area.min.y;
-                viewbox.h = area.h;
-                viewbox.w = Math.floor((area.h * max_w) / max_h);
+                viewbox.y = area.min.y - area.margin;
+                viewbox.h = area.h + 2*area.margin;
+                viewbox.w = Math.floor((viewbox.h * area.limits.w) / area.limits.h);
                 viewbox.x = area.min.x - ((viewbox.w - area.w) / 2);
             }
         }
         else {
             // do not fill available room, preserve aspect ratio
-            viewbox.x = area.min.x;
-            viewbox.y = area.min.y;
-            viewbox.w = area.w;
-            viewbox.h = area.h;
-            // check whether we are more limited on width or on height
-            if (area.w/max_w > area.h/max_h) {
-                // compute size based on width
-                component.w = max_w;
-                component.h = (area.h*component.w) / area.w;
+            viewbox.x = area.min.x - area.margin;
+            viewbox.y = area.min.y - area.margin;
+            viewbox.w = area.w + 2*area.margin;
+            viewbox.h = area.h + 2*area.margin;
+            if (area.limitation == 'width') {
+                svg.w = area.limits.w;
+                svg.h = (viewbox.h*svg.w) / viewbox.w;
             }
             else {
-                // compute size based on height
-                component.h = max_h;
-                component.w = (area.w*component.h) / area.h;
+                svg.h = area.limits.h;
+                svg.w = (viewbox.w*svg.h) / viewbox.h;
             }
         }
-        // update component attributes
+        // update DOM elements attributes
         this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
-        this.setSize(component.w, component.h);
+        this.setSize(svg.w, svg.h);
     };
     this.updateZoomRect = function() {
         zoomRect.setShape(this.viewbox);
@@ -261,7 +277,7 @@ function NetGraph(svggraph) {
                         round2Decimals(this.viewbox.y - offset_y),
                         round2Decimals(new_width),
                         round2Decimals(new_height));
-        updateZoomView();
+        app.updateZoomView();
     };
     let saved_this = this;
     this.svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
@@ -288,16 +304,6 @@ function Slider(svgslider) {
         this.svgslider.setAttributeNS(null, "viewBox",
                     x + " " + y + " " + width + " " + height);
     };
-    this.getSize = function() {
-        return {
-            width: this.svgslider.getAttributeNS(null, "width"),
-            height: this.svgslider.getAttributeNS(null, "height")
-        }
-    };
-    this.setSize = function(width, height) {
-        this.svgslider.setAttributeNS(null, "width", width);
-        this.svgslider.setAttributeNS(null, "height", height);
-    }
     this.onStartDrag = function(mousePos) {
         console.log({ mouseStart:    mousePos.svg,
                  valueStart:    this.value });
@@ -428,40 +434,100 @@ function initZoomNetGraph() {
     return zoomNetGraph;
 }
 
-function updateZoomView() {
-    netGraph.updateZoomRect();
-    let netGraphSize = netGraph.getSize();
-    // zoomNetGraph viewbox should be large enough to show the zoom rectangle
-    let shape = zoomRect.getShape();
-    let bounds = {  min: { x: shape.x,
-                           y: shape.y },
-                    max: { x: shape.x + shape.width,
-                           y: shape.y + shape.height }
-                 };
-    zoomNetGraph.autoSize(netGraphSize.width/5, netGraphSize.height/5, false, bounds);
-}
-
-function autoSize() {
-    netGraph.autoSizeFillParent();
-    updateZoomView();
-    slider.autoSize();
+function App() {
+    this.nodes = [];
+    this.arrows = [];
+    this.init = function() {
+        netGraph = initNetGraph();
+        zoomNetGraph = initZoomNetGraph();
+        slider = initSlider();
+        window.addEventListener('resize', this.autoSize);
+        let autosizeButton = document.querySelector("#zoom-autosize-btn");
+        let this_app = this;
+        autosizeButton.onclick = function() { this_app.autoSize(); };
+    };
+    this.analyseAreaUsage = function(points, limits) {
+        let area = {}, bounds;
+        bounds = getMinMax(points);
+        area.limits = limits;
+        area.min = bounds.min;
+        area.max = bounds.max;
+        area.w = area.max.x - area.min.x;
+        area.h = area.max.y - area.min.y;
+        if (area.w/limits.w > area.h/limits.h) {
+            area.limitation = 'width';
+            area.margin = Math.floor(AUTOSIZE_MARGIN_PERCENT * area.w / 100);
+            area.viewboxPixelSize = limits.w / (area.w + 2*area.margin);
+        }
+        else {
+            area.limitation = 'height';
+            area.margin = Math.floor(AUTOSIZE_MARGIN_PERCENT * area.h / 100);
+            area.viewboxPixelSize = limits.h / (area.h + 2*area.margin);
+        }
+        return area;
+    };
+    this.autoScale = function() {
+        let limits = netGraph.getContainerSize();
+        let points = this.nodes.map(node => node.coordinates.user);
+        let area = this.analyseAreaUsage(points, limits);
+        let scaleFactor = area.viewboxPixelSize / EXPECTED_VIEWBOX_PIXEL_SIZE;
+        let scaleCenter = { x: area.min.x + (area.w / 2), y: area.min.y + (area.h / 2) };
+        for (node of this.nodes) {
+            node.setScaling({ center: scaleCenter, factor: scaleFactor })
+        }
+    };
+    this.autoSize = function() {
+        // scale distance between nodes so that they appear with appropriate size
+        this.autoScale();
+        // resize main network view
+        let limits = netGraph.getContainerSize();
+        let points = this.nodes.map(node => node.coordinates.display);
+        let areaInfo = this.analyseAreaUsage(points, limits);
+        netGraph.resize(areaInfo, true);
+        // resize zoom network view
+        this.updateZoomView();
+        // resize slider
+        slider.autoSize();
+    };
+    this.updateZoomView = function() {
+        let netGraphSize = netGraph.getContainerSize();
+        let limits = { w: netGraphSize.w/5, h: netGraphSize.h/5 };  // 5 times smaller
+        let points = this.nodes.map(node => node.coordinates.display);
+        // zoomNetGraph viewbox should be large enough to show the zoom rectangle
+        // we ensure this by adding two fake points (top-left and bottom-right of the rectangle)
+        netGraph.updateZoomRect();
+        let shape = zoomRect.getShape();
+        points = points.concat([ { x: shape.x,
+                                   y: shape.y },
+                                 { x: shape.x + shape.width,
+                                   y: shape.y + shape.height } ]);
+        let areaInfo = this.analyseAreaUsage(points, limits);
+        zoomNetGraph.resize(areaInfo, false);
+    };
+    this.addNode = function(x, y, label) {
+        let n = new Node(x, y, label);
+        this.nodes.push(n);
+        return n;
+    };
+    this.addArrow = function(n1, n2) {
+        let a = new Arrow(n1, n2);
+        this.arrows.push(a);
+        return a;
+    };
+    this.init();
 }
 
 function initJs() {
-    window.addEventListener('resize', autoSize);
-    netGraph = initNetGraph();
-    zoomNetGraph = initZoomNetGraph();
-    slider = initSlider();
 
-    let n1 = new Node(250, 250, "N1");
-    let n2 = new Node(350, 350, "N2");
-    let n3 = new Node(250, 500, "N3");
+    app = new App();
 
-    nodes = [ n1, n2, n3 ];
+    let n1 = app.addNode(250, 250, "N1");
+    let n2 = app.addNode(350, 350, "N2");
+    let n3 = app.addNode(250, 500, "N3");
 
-    let arrow12 = new Arrow(n1, n2);
-    let arrow32 = new Arrow(n3, n2);
+    let arrow12 = app.addArrow(n1, n2);
+    let arrow32 = app.addArrow(n3, n2);
 
-    arrows = [ arrow12, arrow32 ];
-    autoSize();
+    app.autoSize();
+
 }

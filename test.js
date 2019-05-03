@@ -32,17 +32,49 @@ function getMinMax(points) {
     return bounds;
 }
 
-function scale(scaling, userCoordinates) {
+/* when scaling or zooming with center C and factor F, we can apply this obvious formula on a given point P:
+     P'=C+F(P-C)
+   but, to simplify & reduce calculations, we will compute:
+     a=F
+   and
+     b=C-FC=C(1-F)
+   thus the formula becomes:
+     P'=aP+b
+ */
+function get_scaling_factors(scaling_info) {
     return {
-        x: parseInt(scaling.center.x + scaling.factor * (userCoordinates.x - scaling.center.x), 10),
-        y: parseInt(scaling.center.y + scaling.factor * (userCoordinates.y - scaling.center.y), 10)
+        a: scaling_info.factor,
+        b: {
+            x: scaling_info.center.x * (1-scaling_info.factor),
+            y: scaling_info.center.y * (1-scaling_info.factor)
+        }
     };
 }
 
+/* apply P'=aP+b */
+function scale(scaling, userCoordinates) {
+    return {
+        x: parseInt(scaling.a * userCoordinates.x + scaling.b.x, 10),
+        y: parseInt(scaling.a * userCoordinates.y + scaling.b.y, 10)
+    };
+}
+
+/* apply P=(P'-b)/a */
 function unscale(scaling, displayCoordinates) {
     return {
-        x: round2Decimals((displayCoordinates.x - scaling.center.x) / scaling.factor + scaling.center.x),
-        y: round2Decimals((displayCoordinates.y - scaling.center.y) / scaling.factor + scaling.center.y)
+        x: round2Decimals((displayCoordinates.x - scaling.b.x) / scaling.a),
+        y: round2Decimals((displayCoordinates.y - scaling.b.y) / scaling.a)
+    };
+}
+
+/* scaling parameters equivalent to applying 2 P'=aP+b transforms */
+function aggregate_2_scalings(scaling1, scaling2) {
+    return {
+        a: scaling2.a * scaling1.a,
+        b: {
+            x: scaling2.a * scaling1.b.x + scaling2.b.x,
+            y: scaling2.a * scaling1.b.y + scaling2.b.y,
+        }
     };
 }
 
@@ -105,7 +137,7 @@ function Node(x, y, label) {
     this.coordinates = {
         user: {x:x, y:y},
         display: {x:x, y:y},
-        scaling: {center: { x:0, y:0 }, factor: 1}
+        scaling: get_scaling_factors({center: { x:0, y:0 }, factor: 1})
     };
     let saved_this = this;
     for (svg of document.querySelectorAll(".svggraph")) {
@@ -266,18 +298,7 @@ function NetGraph(svggraph) {
         else {
             factor = ZOOM_FACTOR;
         }
-
-        let width = this.viewbox.width;
-        let height = this.viewbox.height;
-        let new_width = width * factor;
-        let new_height = height * factor;
-        let offset_x = (mouse.x - this.viewbox.x) * (factor-1);
-        let offset_y = (mouse.y - this.viewbox.y) * (factor-1);
-        this.setViewBox(round2Decimals(this.viewbox.x - offset_x),
-                        round2Decimals(this.viewbox.y - offset_y),
-                        round2Decimals(new_width),
-                        round2Decimals(new_height));
-        app.updateZoomView();
+        return app.zoom({ center: mouse, factor: factor });
     };
     let saved_this = this;
     this.svggraph.addEventListener('mousedown', function(evt) { svgStartDrag(evt, saved_this); });
@@ -437,6 +458,7 @@ function initZoomNetGraph() {
 function App() {
     this.nodes = [];
     this.arrows = [];
+    this.scaling = null;
     this.init = function() {
         netGraph = initNetGraph();
         zoomNetGraph = initZoomNetGraph();
@@ -466,15 +488,20 @@ function App() {
         }
         return area;
     };
+    this.setScaling = function(scaling) {
+        this.scaling = scaling;
+        for (node of this.nodes) {
+            node.setScaling(scaling);
+        }
+    };
     this.autoScale = function() {
         let limits = netGraph.getContainerSize();
         let points = this.nodes.map(node => node.coordinates.user);
         let area = this.analyseAreaUsage(points, limits);
         let scaleFactor = area.viewboxPixelSize / EXPECTED_VIEWBOX_PIXEL_SIZE;
         let scaleCenter = { x: area.min.x + (area.w / 2), y: area.min.y + (area.h / 2) };
-        for (node of this.nodes) {
-            node.setScaling({ center: scaleCenter, factor: scaleFactor })
-        }
+        let scaling = get_scaling_factors({ center: scaleCenter, factor: scaleFactor });
+        this.setScaling(scaling);
     };
     this.autoSize = function() {
         // scale distance between nodes so that they appear with appropriate size
@@ -503,6 +530,12 @@ function App() {
                                    y: shape.y + shape.height } ]);
         let areaInfo = this.analyseAreaUsage(points, limits);
         zoomNetGraph.resize(areaInfo, false);
+    };
+    this.zoom = function(zoom_info) {
+        let zoom_scaling = get_scaling_factors(zoom_info);
+        let scaling = aggregate_2_scalings(this.scaling, zoom_scaling);
+        this.setScaling(scaling);
+        this.updateZoomView();
     };
     this.addNode = function(x, y, label) {
         let n = new Node(x, y, label);

@@ -473,12 +473,12 @@ function App() {
     this.arrows = [];
     this.scaling = null;
     this.init = function() {
+        let autosizeButton = document.querySelector("#zoom-autosize-btn");
+        let this_app = this;
         netGraph = initNetGraph();
         zoomNetGraph = initZoomNetGraph();
         slider = initSlider();
-        window.addEventListener('resize', this.autoSize);
-        let autosizeButton = document.querySelector("#zoom-autosize-btn");
-        let this_app = this;
+        window.addEventListener('resize', function() { this_app.autoSize(); });
         autosizeButton.onclick = function() { this_app.autoSize(); };
     };
     this.analyseAreaUsage = function(points, limits) {

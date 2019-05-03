@@ -13,7 +13,16 @@ dragInfo = {
 };
 
 function round2Decimals(f) {
-    return Math.round(f * 100) / 100;
+    if (f == 0) {
+        return 0;
+    }
+    else if (f < 0) {
+        return -round2Decimals(-f);
+    }
+    else {
+        let factor = Math.pow(10, 2-Math.floor(Math.log10(f)));
+        return Math.round(f * factor) / factor;
+    }
 }
 
 function getMinMax(points) {
@@ -54,8 +63,8 @@ function get_scaling_factors(scaling_info) {
 /* apply P'=aP+b */
 function scale(scaling, userCoordinates) {
     return {
-        x: parseInt(scaling.a * userCoordinates.x + scaling.b.x, 10),
-        y: parseInt(scaling.a * userCoordinates.y + scaling.b.y, 10)
+        x: Math.floor(scaling.a * userCoordinates.x + scaling.b.x),
+        y: Math.floor(scaling.a * userCoordinates.y + scaling.b.y)
     };
 }
 
@@ -182,8 +191,8 @@ function Node(x, y, label) {
     this.onDrag = function(info, mousePos) {
         // move center
         this.coordinates.display = {
-            x: round2Decimals(mousePos.svg.x - info.offset.x),
-            y: round2Decimals(mousePos.svg.y - info.offset.y),
+            x: parseInt(mousePos.svg.x - info.offset.x, 10),
+            y: parseInt(mousePos.svg.y - info.offset.y, 10),
         };
         // redraw
         this.redraw();
@@ -206,6 +215,10 @@ function NetGraph(svggraph) {
         return this.viewbox;
     };
     this.setViewBox = function(x, y, width, height) {
+        x = round2Decimals(x);
+        y = round2Decimals(y);
+        width = round2Decimals(width);
+        height = round2Decimals(height);
         this.viewbox = { x: x, y: y, width: width, height: height };
         this.svggraph.setAttributeNS(null, "viewBox",
                     x + " " + y + " " + width + " " + height);
@@ -218,8 +231,8 @@ function NetGraph(svggraph) {
         };
     };
     this.setSize = function(width, height) {
-        this.svggraph.setAttributeNS(null, "width", width);
-        this.svggraph.setAttributeNS(null, "height", height);
+        this.svggraph.setAttributeNS(null, "width", Math.floor(width));
+        this.svggraph.setAttributeNS(null, "height", Math.floor(height));
     }
     this.onStartDrag = function(mousePos) {
         this.svggraph.classList.add("dragging");
@@ -235,8 +248,8 @@ function NetGraph(svggraph) {
         let offset = {  x: mouseEnd.x - info.mouseStart.x,
                         y: mouseEnd.y - info.mouseStart.y };
         // translate viewbox
-        this.setViewBox(round2Decimals(info.viewbox.x - offset.x),
-                        round2Decimals(info.viewbox.y - offset.y),
+        this.setViewBox(info.viewbox.x - offset.x,
+                        info.viewbox.y - offset.y,
                         info.viewbox.width,
                         info.viewbox.height);
         // update zoom
@@ -256,14 +269,14 @@ function NetGraph(svggraph) {
                 // compute size based on width
                 viewbox.x = area.min.x - area.margin;
                 viewbox.w = area.w + 2*area.margin;
-                viewbox.h = Math.floor((viewbox.w * area.limits.h) / area.limits.w);
+                viewbox.h = (viewbox.w * area.limits.h) / area.limits.w;
                 viewbox.y = area.min.y - ((viewbox.h - area.h) / 2);
             }
             else {
                 // compute size based on height
                 viewbox.y = area.min.y - area.margin;
                 viewbox.h = area.h + 2*area.margin;
-                viewbox.w = Math.floor((viewbox.h * area.limits.w) / area.limits.h);
+                viewbox.w = (viewbox.h * area.limits.w) / area.limits.h;
                 viewbox.x = area.min.x - ((viewbox.w - area.w) / 2);
             }
         }
@@ -470,21 +483,43 @@ function App() {
     };
     this.analyseAreaUsage = function(points, limits) {
         let area = {}, bounds;
-        bounds = getMinMax(points);
         area.limits = limits;
-        area.min = bounds.min;
-        area.max = bounds.max;
-        area.w = area.max.x - area.min.x;
-        area.h = area.max.y - area.min.y;
-        if (area.w/limits.w > area.h/limits.h) {
-            area.limitation = 'width';
-            area.margin = Math.floor(AUTOSIZE_MARGIN_PERCENT * area.w / 100);
-            area.viewboxPixelSize = limits.w / (area.w + 2*area.margin);
+        if (points.length == 0) {
+            // no points
+            area.min = { x: 0, y: 0 };
+            area.max = { x: 0, y: 0 };
         }
         else {
-            area.limitation = 'height';
-            area.margin = Math.floor(AUTOSIZE_MARGIN_PERCENT * area.h / 100);
-            area.viewboxPixelSize = limits.h / (area.h + 2*area.margin);
+            // 2 points or more
+            bounds = getMinMax(points);
+            area.min = bounds.min;
+            area.max = bounds.max;
+        }
+        area.w = area.max.x - area.min.x;
+        area.h = area.max.y - area.min.y;
+        if (area.w == 0 && area.h == 0) {
+            // 0 or 1 point
+            if (limits.w < limits.h) {
+                area.limitation = 'width';
+                area.margin = limits.w / 2 / EXPECTED_VIEWBOX_PIXEL_SIZE;
+            }
+            else {
+                area.limitation = 'height';
+                area.margin = limits.h / 2 / EXPECTED_VIEWBOX_PIXEL_SIZE;
+            }
+            area.viewboxPixelSize = EXPECTED_VIEWBOX_PIXEL_SIZE;
+        }
+        else {
+            if (area.w/limits.w > area.h/limits.h) {
+                area.limitation = 'width';
+                area.margin = AUTOSIZE_MARGIN_PERCENT * area.w / 100;
+                area.viewboxPixelSize = limits.w / (area.w + 2*area.margin);
+            }
+            else {
+                area.limitation = 'height';
+                area.margin = AUTOSIZE_MARGIN_PERCENT * area.h / 100;
+                area.viewboxPixelSize = limits.h / (area.h + 2*area.margin);
+            }
         }
         return area;
     };
@@ -540,6 +575,7 @@ function App() {
     this.addNode = function(x, y, label) {
         let n = new Node(x, y, label);
         this.nodes.push(n);
+        this.autoSize();
         return n;
     };
     this.addArrow = function(n1, n2) {
@@ -554,12 +590,13 @@ function initJs() {
 
     app = new App();
 
-    let n1 = app.addNode(250, 250, "N1");
-    let n2 = app.addNode(350, 350, "N2");
-    let n3 = app.addNode(250, 500, "N3");
+    setTimeout(function(){ n1 = app.addNode(250, 250, "N1"); }, 3000);
+    setTimeout(function(){ n2 = app.addNode(352, 252, "N2"); }, 6000);
+    setTimeout(function(){ n3 = app.addNode(250, 500, "N3"); }, 9000);
+    setTimeout(function(){ n4 = app.addNode(750, 150, "N4"); }, 12000);
 
-    let arrow12 = app.addArrow(n1, n2);
-    let arrow32 = app.addArrow(n3, n2);
+    setTimeout(function(){ arrow12 = app.addArrow(n1, n2); }, 10000);
+    setTimeout(function(){ arrow32 = app.addArrow(n3, n2); }, 12500);
 
     app.autoSize();
 

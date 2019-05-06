@@ -1,13 +1,16 @@
+#page {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background: grey;
+}
 #netcol {
     background: lightgrey;
-    width: 70%;
+    flex: 1;
     position: relative;
 }
-#tracescol {
-    background: grey;
-    width: 30%;
-    display: flex;
-    overflow: hidden;
+#svgdiv {
+    height: 100%;
 }
 #slidecol {
     margin: 10px;
@@ -17,7 +20,6 @@
 #tablecol {
     text-align: center;
     background: grey;
-    flex-grow: 1;
     margin-top: 20px;
     margin-left: 5px;
     margin-right: 20px;
@@ -26,18 +28,15 @@
 #table-1 {
     margin-top: 5px;
 }
-#btn-trace-up {
+.hidden-row {
     visibility: hidden;
 }
-#btn-trace-down {
-    visibility: hidden;
-}
-.trace-row-hidden {
+.hidden {
     visibility: hidden;
 }
 #svggraph {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
 }
 #zoom-svggraph {
     pointer-events: none;

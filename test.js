@@ -262,8 +262,6 @@ function NetGraph(svggraph) {
         let viewbox = {}, svg = {};
         // compute viewbox and svg size
         if (fill) {
-            svg.w = area.limits.w;
-            svg.h = area.limits.h;
             // check whether we are more limited on width or on height
             if (area.limitation == 'width') {
                 // compute size based on width
@@ -294,10 +292,11 @@ function NetGraph(svggraph) {
                 svg.h = area.limits.h;
                 svg.w = (viewbox.w*svg.h) / viewbox.h;
             }
+            // set svg size
+            this.setSize(svg.w, svg.h);
         }
-        // update DOM elements attributes
+        // update svg viewbox
         this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
-        this.setSize(svg.w, svg.h);
     };
     this.updateZoomRect = function() {
         zoomRect.setShape(this.viewbox);
@@ -481,10 +480,10 @@ function TraceView() {
         for (let i = 0; i < traceRows.length; i++) {
             rowStyles = traceRows[i].classList;
             if (i < trInfos.length) {
-                rowStyles.remove('trace-row-hidden');
+                rowStyles.remove('hidden-row');
             }
             else {
-                rowStyles.add('trace-row-hidden');
+                rowStyles.add('hidden-row');
             }
         }
     }
@@ -492,13 +491,13 @@ function TraceView() {
     this.autoSize = function() {
         let tbodyTraces = document.querySelector("#tbodyTraces");
         let firstRow = tbodyTraces.querySelector("tr"), traceRow;
-        let container = document.querySelector("#tracescol");
+        let container = document.querySelector("#tablecol");
 
         /* try to append has much rows has possible until the
            container size overflows */
         while (container.scrollHeight == container.clientHeight) {
             traceRow = firstRow.cloneNode(true);
-            traceRow.classList.add('trace-row-hidden');
+            traceRow.classList.add('hidden-row');
             tbodyTraces.appendChild(traceRow);
         }
 
@@ -585,6 +584,10 @@ function App() {
         this.setScaling(scaling);
     };
     this.autoSize = function() {
+        // resize trace view
+        traceview.autoSize();
+        // resize slider
+        slider.autoSize();
         // scale distance between nodes so that they appear with appropriate size
         this.autoScale();
         // resize main network view
@@ -594,10 +597,6 @@ function App() {
         netGraph.resize(areaInfo, true);
         // resize zoom network view
         this.updateZoomView();
-        // resize trace view
-        traceview.autoSize();
-        // resize slider
-        slider.autoSize();
     };
     this.updateZoomView = function() {
         let netGraphSize = netGraph.getContainerSize();

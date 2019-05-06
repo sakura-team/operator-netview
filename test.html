@@ -7,62 +7,55 @@
         <script src="test.js"></script>
     </head>
     <body onload="initJs()">
-        <div class="container-fluid">
-            <div class="row h-100">
-                <div id="netcol" class="h-100">
-                    <div id="svgdiv" class="h-100">
-                        <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-                            <defs>
-                            <marker id='arrow-head' orient="auto"
-                                                    markerWidth='2' markerHeight='4'
-                                                    refX='0.1' refY='2'>
-                            <!-- triangle pointing right (+x) -->
-                            <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
-                            </marker>
-                            </defs>
-                        </svg>
-                    </div>
-                    <div class="zoom-control-box">
-                        <h5>Zoom Control</h5>
-                        <hr/>
-                        <div id='zoom-svgdiv'></div>
-                        <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
-                    </div>
+        <div id="page">
+            <div id="netcol">
+                <div id="svgdiv">
+                    <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                        <defs>
+                        <marker id='arrow-head' orient="auto"
+                                                markerWidth='2' markerHeight='4'
+                                                refX='0.1' refY='2'>
+                        <!-- triangle pointing right (+x) -->
+                        <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
+                        </marker>
+                        </defs>
+                    </svg>
                 </div>
-                <div id="tracescol" class="h-100">
-                    <div class="container-fluid">
-                        <div class="row h-100">
-                            <div id="slidecol">
-                                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
-                                    <path id="sliderline" d='M0,0 L0,100'/>
-                                    <circle id="slidercircle" r=3 cx="0" cy="15"/>
-                                </svg>
-                            </div>
-                            <div id="tablecol">
-                                <i id="btn-trace-up" class="fa fa-angle-double-up"></i>
-                                <table id="table-1" class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Timestamp</th>
-                                            <th scope="col">Node</th>
-                                            <th scope="col">Message</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyTraces">
-                                        <tr class="trace-row-hidden">
-                                            <td>timestamp</td>
-                                            <td>node-label</td>
-                                            <td>trace-message</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <i id="btn-trace-down" class="fa fa-angle-double-down"></i>
-                            </div>
-                        </div>
-                    </div>
+                <div class="zoom-control-box">
+                    <h5>Zoom Control</h5>
+                    <hr/>
+                    <div id='zoom-svgdiv'></div>
+                    <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
                 </div>
             </div>
+            <div id="slidecol">
+                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
+                    <path id="sliderline" d='M0,0 L0,100'/>
+                    <circle id="slidercircle" r=3 cx="0" cy="15"/>
+                </svg>
+            </div>
+            <div id="tablecol">
+                <i id="btn-trace-up" class="hidden fa fa-angle-double-up"></i>
+                <table id="table-1" class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col">Timestamp</th>
+                            <th scope="col">Node</th>
+                            <th scope="col">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyTraces">
+                        <tr class="hidden-row">
+                            <td>timestamp</td>
+                            <td>node-label</td>
+                            <td>trace-message</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <i id="btn-trace-down" class="hidden fa fa-angle-double-down"></i>
+            </div>
         </div>
-    </body>
+    </div>
+</body>
 </html>
 

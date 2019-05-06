@@ -9,15 +9,28 @@
     display: flex;
 }
 #slidecol {
+    margin: 10px;
     width: 50px;
     background: grey;
 }
 #tablecol {
+    text-align: center;
     background: grey;
     flex-grow: 1;
+    margin-top: 20px;
+    margin-left: 5px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
 }
 #table-1 {
     margin-top: 5px;
+}
+#btn-trace-up {
+    visibility: hidden;
+}
+#btn-trace-down {
+    visibility: hidden;
 }
 #svggraph {
     max-width: 100%;

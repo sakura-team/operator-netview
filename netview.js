@@ -1,4 +1,5 @@
 
+console.log('netview.js started');
 NODE_RADIUS = 15;
 ARROW_MARGIN = 7;
 LABEL_OFFSET_Y = 6;
@@ -635,6 +636,7 @@ function App() {
 
 function initJs() {
 
+    console.log('initJs started');
     app = new App();
 
     setTimeout(function(){ n1 = app.addNode(250, 250, "N1"); }, 3000);
@@ -663,6 +665,15 @@ function initJs() {
         }
     ]); }, 500);
 
-    app.autoSize();
+    var ws = new WebSocket("ws://localhost:8080/websocket");
+    ws.onopen = function() {
+        ws.send("Hello, world");
+    };
+    ws.onmessage = function (evt) {
+        alert(evt.data);
+    };
 
+    app.autoSize();
 }
+
+console.log('netview.js loaded');

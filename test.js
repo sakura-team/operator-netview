@@ -339,13 +339,10 @@ function Slider(svgslider) {
                     x + " " + y + " " + width + " " + height);
     };
     this.onStartDrag = function(mousePos) {
-        console.log({ mouseStart:    mousePos.svg,
-                 valueStart:    this.value });
         return { mouseStart:    mousePos.svg,
                  valueStart:    this.value };
     };
     this.onDrag = function(info, mousePos) {
-        console.log(info, mousePos);
         // compute mouse offset
         let offset = mousePos.svg.y - info.mouseStart.y;
         // compute and set new value
@@ -468,6 +465,54 @@ function initZoomNetGraph() {
     return zoomNetGraph;
 }
 
+function TraceView() {
+    this.update = function(trInfos) {
+        let traceRows = document.querySelector("#tbodyTraces").querySelectorAll("tr");
+        let traceRow, traceCells, rowStyles;
+
+        trInfos.map(function(trInfo, i) {
+            traceRow = traceRows[i];
+            traceCells = traceRow.querySelectorAll("td");
+            traceCells[0].textContent = trInfo.timestamp;
+            traceCells[1].textContent = trInfo.node;
+            traceCells[2].textContent = trInfo.message;
+        });
+
+        for (let i = 0; i < traceRows.length; i++) {
+            rowStyles = traceRows[i].classList;
+            if (i < trInfos.length) {
+                rowStyles.remove('trace-row-hidden');
+            }
+            else {
+                rowStyles.add('trace-row-hidden');
+            }
+        }
+    }
+
+    this.autoSize = function() {
+        let tbodyTraces = document.querySelector("#tbodyTraces");
+        let firstRow = tbodyTraces.querySelector("tr"), traceRow;
+        let container = document.querySelector("#tracescol");
+
+        /* try to append has much rows has possible until the
+           container size overflows */
+        while (container.scrollHeight == container.clientHeight) {
+            traceRow = firstRow.cloneNode(true);
+            traceRow.classList.add('trace-row-hidden');
+            tbodyTraces.appendChild(traceRow);
+        }
+
+        /* now remove rows until the container do not overflow anymore */
+        while (container.scrollHeight != container.clientHeight) {
+            if (tbodyTraces.querySelectorAll("tr").length == 1)
+                break;
+            tbodyTraces.removeChild(tbodyTraces.querySelector("tr:last-of-type"));
+        }
+    };
+
+    return this;
+}
+
 function App() {
     this.nodes = [];
     this.arrows = [];
@@ -477,6 +522,7 @@ function App() {
         let this_app = this;
         netGraph = initNetGraph();
         zoomNetGraph = initZoomNetGraph();
+        traceview = new TraceView();
         slider = initSlider();
         window.addEventListener('resize', function() { this_app.autoSize(); });
         autosizeButton.onclick = function() { this_app.autoSize(); };
@@ -548,6 +594,8 @@ function App() {
         netGraph.resize(areaInfo, true);
         // resize zoom network view
         this.updateZoomView();
+        // resize trace view
+        traceview.autoSize();
         // resize slider
         slider.autoSize();
     };
@@ -597,6 +645,24 @@ function initJs() {
 
     setTimeout(function(){ arrow12 = app.addArrow(n1, n2); }, 10000);
     setTimeout(function(){ arrow32 = app.addArrow(n3, n2); }, 12500);
+
+    setTimeout(function(){ traceview.update([
+        {
+            timestamp: 1557126305.919,
+            node: 'N2',
+            message: 'MoveTo: 223 555'
+        },
+        {
+            timestamp: 1557126305.985,
+            node: 'N2',
+            message: 'Ended experiment'
+        },
+        {
+            timestamp: 1557126306.352,
+            node: 'N1',
+            message: 'OK sent'
+        }
+    ]); }, 500);
 
     app.autoSize();
 

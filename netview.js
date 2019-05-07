@@ -42,6 +42,16 @@ function getMinMax(points) {
     return bounds;
 }
 
+function displayOrHide(selector, value) {
+    let elem = document.querySelector(selector);
+    if (value) {
+        elem.classList.remove("no-display");
+    }
+    else {
+        elem.classList.add("no-display");
+    }
+}
+
 /* when scaling or zooming with center C and factor F, we can apply this obvious formula on a given point P:
      P'=C+F(P-C)
    but, to simplify & reduce calculations, we will compute:
@@ -630,6 +640,16 @@ function App() {
         let a = new Arrow(n1, n2);
         this.arrows.push(a);
         return a;
+    };
+    this.zoomBoxExpand = function() {
+        displayOrHide("#zoom-box-content", true);
+        displayOrHide("#zoom-box-expand", false);
+        displayOrHide("#zoom-box-reduce", true);
+    };
+    this.zoomBoxReduce = function() {
+        displayOrHide("#zoom-box-content", false);
+        displayOrHide("#zoom-box-expand", true);
+        displayOrHide("#zoom-box-reduce", false);
     };
     this.init();
 }

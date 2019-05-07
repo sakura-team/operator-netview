@@ -34,6 +34,9 @@
 .hidden {
     visibility: hidden;
 }
+.no-display {
+    display: none;
+}
 #svggraph {
     width: 100%;
     height: 100%;
@@ -103,6 +106,16 @@
     right: 20px;
     bottom: 20px;
     z-index: 1;
+}
+#zoom-box-title {
+    margin-left: 15px;
+    margin-right: 15px;
+}
+.window-control {
+    cursor: pointer;
+    float: right;
+    margin-left: 15px;
+    margin-top: 4px;
 }
 
 hr {

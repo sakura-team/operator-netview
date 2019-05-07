@@ -22,10 +22,15 @@
                     </svg>
                 </div>
                 <div class="zoom-control-box">
-                    <h5>Zoom Control</h5>
-                    <hr/>
-                    <div id='zoom-svgdiv'></div>
-                    <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
+                    <h5 id="zoom-box-title">Zoom Control
+                        <i id="zoom-box-expand" onclick="app.zoomBoxExpand();" class="window-control fa fa-plus-square"></i>
+                        <i id="zoom-box-reduce" onclick="app.zoomBoxReduce();" class="no-display window-control fa fa-minus-square"></i>
+                    </h5>
+                    <div id='zoom-box-content' class="no-display">
+                        <hr/>
+                        <div id='zoom-svgdiv'></div>
+                        <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
+                    </div>
                 </div>
             </div>
             <div id="slidecol">

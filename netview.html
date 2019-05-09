@@ -2,13 +2,13 @@
     <head>
         <meta charset="UTF-8" />
         <script src="netview.js"></script>
-    </head>
-    <body onload="initJs()">
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"/>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="netview.css">
-        <div id="page">
-            <div id="netcol">
+    </head>
+    <body onload="initJs()">
+        <div class="page page-row">
+            <div id="netcol" class="page-span">
                 <div id="svgdiv">
                     <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
                         <defs>
@@ -21,43 +21,58 @@
                         </defs>
                     </svg>
                 </div>
-                <div class="zoom-control-box">
-                    <h5 id="zoom-box-title">Zoom Control
-                        <i id="zoom-box-expand" onclick="app.zoomBoxExpand();" class="window-control fa fa-plus-square"></i>
-                        <i id="zoom-box-reduce" onclick="app.zoomBoxReduce();" class="no-display window-control fa fa-minus-square"></i>
-                    </h5>
-                    <div id='zoom-box-content' class="no-display">
-                        <hr/>
-                        <div id='zoom-svgdiv'></div>
-                        <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
+                <div id="tools-area">
+                    <div class="toolbox">
+                        <h5 class="toolbox-title">Zoom Control
+                            <i id="zoom-box-expand" onclick="app.zoomBoxExpand();" class="window-control fa fa-plus-square"></i>
+                            <i id="zoom-box-reduce" onclick="app.zoomBoxReduce();" class="no-display window-control fa fa-minus-square"></i>
+                        </h5>
+                        <div id='zoom-box-content' class="no-display">
+                            <hr/>
+                            <div id='zoom-svgdiv'></div>
+                            <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
+                        </div>
+                    </div>
+                    <div id="traces-box-reduced" class="toolbox">
+                        <h5 class="toolbox-title">Traces
+                            <i id="traces-box-expand" onclick="app.tracesBoxExpand();" class="window-control fa fa-plus-square"></i>
+                        </h5>
                     </div>
                 </div>
             </div>
-            <div id="slidecol">
-                <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
-                    <path id="sliderline" d='M0,0 L0,100'/>
-                    <circle id="slidercircle" r=3 cx="0" cy="15"/>
-                </svg>
-            </div>
-            <div id="tablecol">
-                <i id="btn-trace-up" class="hidden fa fa-angle-double-up"></i>
-                <table id="table-1" class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col">Timestamp</th>
-                            <th scope="col">Node</th>
-                            <th scope="col">Message</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyTraces">
-                        <tr class="hidden-row">
-                            <td>timestamp</td>
-                            <td>node-label</td>
-                            <td>trace-message</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <i id="btn-trace-down" class="hidden fa fa-angle-double-down"></i>
+            <div id="traces-box-expanded" class="no-display page-column toolbox">
+                <h5 class="toolbox-title">Traces
+                    <i id="traces-box-reduce" onclick="app.tracesBoxReduce();" class="window-control fa fa-minus-square"></i>
+                </h5>
+                <hr/>
+                <div id='traces-box-content' class="page-span page-row">
+                    <div id="slidecol">
+                        <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
+                            <path id="sliderline" d='M0,0 L0,100'/>
+                            <circle id="slidercircle" r=3 cx="0" cy="15"/>
+                        </svg>
+                    </div>
+                    <div id="tablecol">
+                        <i id="btn-trace-up" class="hidden fa fa-angle-double-up"></i>
+                        <table id="table-1" class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Timestamp</th>
+                                    <th scope="col">Node</th>
+                                    <th scope="col">Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyTraces">
+                                <tr class="hidden-row">
+                                    <td>timestamp</td>
+                                    <td>node-label</td>
+                                    <td>trace-message</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <i id="btn-trace-down" class="hidden fa fa-angle-double-down"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

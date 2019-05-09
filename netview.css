@@ -1,12 +1,29 @@
-#page {
-    display: flex;
+.page {
     width: 100%;
     height: 100%;
-    background: grey;
-}
-#netcol {
     background: lightgrey;
-    flex: 1;
+    padding: 10px;
+}
+
+.page-span {
+  flex: 1;
+}
+
+.page-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.page-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#netcol {
     position: relative;
 }
 #svgdiv {
@@ -15,11 +32,9 @@
 #slidecol {
     margin: 10px;
     width: 50px;
-    background: grey;
 }
 #tablecol {
     text-align: center;
-    background: grey;
     margin-top: 20px;
     margin-left: 5px;
     margin-right: 20px;
@@ -94,7 +109,15 @@
     fill: grey;
 }
 
-.zoom-control-box {
+#tools-area {
+    position: absolute;
+    right: 20px;
+    bottom: 0px;
+    z-index: 1;
+}
+
+.toolbox {
+    margin-bottom: 10px;
     padding-top: 6px;
     padding-bottom: 6px;
     background: rgba(255,255,255,0.6);
@@ -102,12 +125,9 @@
     border-radius: 9px;
     text-align: center;
     color: #777;
-    position: absolute;
-    right: 20px;
-    bottom: 20px;
-    z-index: 1;
 }
-#zoom-box-title {
+
+.toolbox-title {
     margin-left: 15px;
     margin-right: 15px;
 }

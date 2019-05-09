@@ -476,11 +476,37 @@ function initZoomNetGraph() {
 }
 
 function TraceView() {
+    this.expanded = false;
+    this.trInfos = null;
+
+    this.expand = function() {
+        this.expanded = true;
+        displayOrHide("#traces-box-expanded", true);
+        displayOrHide("#traces-box-reduced", false);
+        this.autoSize();
+        if (this.trInfos != null) {
+            this.updateContent();
+        }
+    };
+
+    this.reduce = function() {
+        this.expanded = false;
+        displayOrHide("#traces-box-expanded", false);
+        displayOrHide("#traces-box-reduced", true);
+    };
+
     this.update = function(trInfos) {
+        this.trInfos = trInfos;
+        if (this.expanded) {
+            this.updateContent();
+        }
+    };
+
+    this.updateContent = function() {
         let traceRows = document.querySelector("#tbodyTraces").querySelectorAll("tr");
         let traceRow, traceCells, rowStyles;
 
-        trInfos.map(function(trInfo, i) {
+        this.trInfos.map(function(trInfo, i) {
             traceRow = traceRows[i];
             traceCells = traceRow.querySelectorAll("td");
             traceCells[0].textContent = trInfo.timestamp;
@@ -490,7 +516,7 @@ function TraceView() {
 
         for (let i = 0; i < traceRows.length; i++) {
             rowStyles = traceRows[i].classList;
-            if (i < trInfos.length) {
+            if (i < this.trInfos.length) {
                 rowStyles.remove('hidden-row');
             }
             else {
@@ -500,6 +526,11 @@ function TraceView() {
     }
 
     this.autoSize = function() {
+        /* if window is minimized, exit */
+        if (this.expanded == false) {
+            return;
+        }
+
         let tbodyTraces = document.querySelector("#tbodyTraces");
         let firstRow = tbodyTraces.querySelector("tr"), traceRow;
         let container = document.querySelector("#tablecol");
@@ -518,6 +549,9 @@ function TraceView() {
                 break;
             tbodyTraces.removeChild(tbodyTraces.querySelector("tr:last-of-type"));
         }
+
+        /* resize slider */
+        slider.autoSize();
     };
 
     return this;
@@ -597,8 +631,6 @@ function App() {
     this.autoSize = function() {
         // resize trace view
         traceview.autoSize();
-        // resize slider
-        slider.autoSize();
         // scale distance between nodes so that they appear with appropriate size
         this.autoScale();
         // resize main network view
@@ -651,6 +683,12 @@ function App() {
         displayOrHide("#zoom-box-expand", true);
         displayOrHide("#zoom-box-reduce", false);
     };
+    this.tracesBoxExpand = function() {
+        traceview.expand();
+    };
+    this.tracesBoxReduce = function() {
+        traceview.reduce();
+    };
     this.init();
 }
 
@@ -690,7 +728,7 @@ function initJs() {
         ws.send("Hello, world");
     };
     ws.onmessage = function (evt) {
-        alert(evt.data);
+        console.log('ws message:', evt.data);
     };
 
     app.autoSize();

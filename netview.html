@@ -7,75 +7,107 @@
         <link rel="stylesheet" type="text/css" href="netview.css">
     </head>
     <body onload="initJs()">
-        <div class="page page-row">
-            <div id="netcol" class="page-span">
-                <div id="svgdiv">
-                    <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-                        <defs>
-                        <marker id='arrow-head' orient="auto"
-                                                markerWidth='2' markerHeight='4'
-                                                refX='0.1' refY='2'>
-                        <!-- triangle pointing right (+x) -->
-                        <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
-                        </marker>
-                        </defs>
-                    </svg>
-                </div>
-                <div id="tools-area">
-                    <div class="toolbox">
-                        <h5 class="toolbox-title">Zoom Control
-                            <i id="zoom-box-expand" onclick="app.zoomBoxExpand();" class="window-control fa fa-plus-square"></i>
-                            <i id="zoom-box-reduce" onclick="app.zoomBoxReduce();" class="no-display window-control fa fa-minus-square"></i>
-                        </h5>
-                        <div id='zoom-box-content' class="no-display">
-                            <hr/>
-                            <div id='zoom-svgdiv'></div>
-                            <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
-                        </div>
-                    </div>
-                    <div id="traces-box-reduced" class="toolbox">
-                        <h5 class="toolbox-title">Traces
-                            <i id="traces-box-expand" onclick="app.tracesBoxExpand();" class="window-control fa fa-plus-square"></i>
-                        </h5>
-                    </div>
-                </div>
-            </div>
-            <div id="traces-box-expanded" class="no-display page-column toolbox">
-                <h5 class="toolbox-title">Traces
-                    <i id="traces-box-reduce" onclick="app.tracesBoxReduce();" class="window-control fa fa-minus-square"></i>
-                </h5>
-                <hr/>
-                <div id='traces-box-content' class="page-span page-row">
-                    <div id="slidecol">
-                        <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
-                            <path id="sliderline" d='M0,0 L0,100'/>
-                            <circle id="slidercircle" r=3 cx="0" cy="15"/>
+        <div class="page page-column">
+            <div class="top-page-row page-row">
+                <div id="netcol" class="page-span">
+                    <div id="svgdiv">
+                        <svg id="svggraph" class="svggraph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                            <defs>
+                            <marker id='arrow-head' orient="auto"
+                                                    markerWidth='2' markerHeight='4'
+                                                    refX='0.1' refY='2'>
+                            <!-- triangle pointing right (+x) -->
+                            <path class="arrow-head-path" d='M0,0 V4 L2,2 Z'/>
+                            </marker>
+                            </defs>
                         </svg>
                     </div>
-                    <div id="tablecol">
-                        <i id="btn-trace-up" class="hidden fa fa-angle-double-up"></i>
-                        <table id="table-1" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Timestamp</th>
-                                    <th scope="col">Node</th>
-                                    <th scope="col">Message</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyTraces">
-                                <tr class="hidden-row">
-                                    <td>timestamp</td>
-                                    <td>node-label</td>
-                                    <td>trace-message</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <i id="btn-trace-down" class="hidden fa fa-angle-double-down"></i>
+                    <div id="tools-area">
+                        <div class="toolbox">
+                            <h5 class="toolbox-title">Zoom Control
+                                <i id="zoom-box-expand" onclick="app.zoomBoxExpand();" class="window-control fa fa-plus-square"></i>
+                                <i id="zoom-box-reduce" onclick="app.zoomBoxReduce();" class="no-display window-control fa fa-minus-square"></i>
+                            </h5>
+                            <div id='zoom-box-content' class="no-display">
+                                <hr/>
+                                <div id='zoom-svgdiv'></div>
+                                <button id='zoom-autosize-btn' class="btn btn-primary">Reset</button>
+                            </div>
+                        </div>
+                        <div id="traces-box-reduced" class="toolbox">
+                            <h5 class="toolbox-title">Traces
+                                <i onclick="app.tracesBoxExpand();" class="window-control fa fa-plus-square"></i>
+                            </h5>
+                        </div>
+                        <div id="timeline-box-reduced" class="toolbox">
+                            <h5 class="toolbox-title">Timeline
+                                <i onclick="app.timelineBoxExpand();" class="window-control fa fa-plus-square"></i>
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                <div id="traces-box-expanded" class="no-display page-column toolbox">
+                    <h5 class="toolbox-title">Traces
+                        <i id="traces-box-reduce" onclick="app.tracesBoxReduce();" class="window-control fa fa-minus-square"></i>
+                    </h5>
+                    <hr/>
+                    <div id='traces-box-content' class="page-span page-row">
+                        <div id="slidecol">
+                            <svg id="svgslider" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 10 110">
+                                <path id="sliderline" d='M0,0 L0,100'/>
+                                <circle id="slidercircle" r=3 cx="0" cy="15"/>
+                            </svg>
+                        </div>
+                        <div id="tablecol">
+                            <i id="btn-trace-up" class="hidden fa fa-angle-double-up"></i>
+                            <table id="table-1" class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Timestamp</th>
+                                        <th scope="col">Node</th>
+                                        <th scope="col">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyTraces">
+                                    <tr class="hidden-row">
+                                        <td>timestamp</td>
+                                        <td>node-label</td>
+                                        <td>trace-message</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <i id="btn-trace-down" class="hidden fa fa-angle-double-down"></i>
+                        </div>
+                    </div>
+                    <!--
+                    -->
+                </div>
+            </div>
+            <div id="timeline-box-expanded" class="no-display bottom-page-row toolbox">
+                <h5 class="toolbox-title">Timeline
+                    <i onclick="app.timelineBoxReduce();" class="window-control fa fa-minus-square"></i>
+                </h5>
+                <hr/>
+                <div class="page-row">
+                    <div class="node-selectors page-column">
+                        <select class="node-selector no-display">
+                            <option value="N1">node N1</option>
+                        </select>
+                    </div>
+                    <div class="node-timeline-svgs page-column page-span">
+                        <!-- <svg class="node-timeline-svg" xmlns="http://www.w3.org/2000/svg" viewbox="0 -10 100 20" preserveAspectRatio="none">
+                             <path class="node-timeline-baseline" d='M0,0 L100,0'/>
+                             <path class="node-timeline-send" d='M15.2,-1 L21.3,-1'/>
+                            OR
+                             <path class="node-timeline-receive" d='M15.4,-1 L21.5,-1'/>
+                        </svg> -->
+                        <svg class="node-timeline-svg no-display" xmlns="http://www.w3.org/2000/svg" viewbox="0 -10 100 20" preserveAspectRatio="none">
+                             <path class="node-timeline-baseline" d='M0,0 L100,0'/>
+                        </svg>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
+    </body>
 </html>
 

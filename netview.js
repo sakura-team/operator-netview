@@ -160,7 +160,7 @@ function Node(x, y, label) {
         scaling: get_scaling_factors({center: { x:0, y:0 }, factor: 1})
     };
     let saved_this = this;
-    for (svg of document.querySelectorAll(".svggraph")) {
+    for (let svg of document.querySelectorAll(".svggraph")) {
         let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttributeNS(null, 'r', NODE_RADIUS);
         circle.setAttributeNS(null, 'class', 'node');
@@ -179,11 +179,11 @@ function Node(x, y, label) {
         this.redraw();
     };
     this.redraw = function() {
-        for (circle of this.circles) {
+        for (let circle of this.circles) {
             circle.setAttributeNS(null, 'cx', this.coordinates.display.x);
             circle.setAttributeNS(null, 'cy', this.coordinates.display.y);
         }
-        for (text of this.texts) {
+        for (let text of this.texts) {
             text.setAttributeNS(null, 'x', this.coordinates.display.x);
             text.setAttributeNS(null, 'y', this.coordinates.display.y + LABEL_OFFSET_Y);
         }
@@ -389,6 +389,110 @@ function Slider(svgslider) {
                         svgStartDrag(evt, saved_this); });
 }
 
+function Timeline(app, view, node, combo, svgtimeline) {
+    this.app = app;
+    this.view = view;
+    this.node = node;
+    this.combo = combo;
+    this.svgtimeline = svgtimeline;
+    this.range = null;
+    let thisTimeline = this;
+    this.updateNodes = function() {
+        let options = this.combo.querySelectorAll("option");
+        this.app.nodes.forEach(function(node, index){
+            let option;
+            if (index < options.length) {
+                option = options[index];
+            }
+            else {
+                option = options[0].cloneNode(true);
+            }
+            option.setAttribute("value", index);
+            option.textContent = "node " + node.label;
+            thisTimeline.combo.appendChild(option);
+            if (node === thisTimeline.node) {
+                thisTimeline.combo.value = index;
+            }
+        });
+    };
+    this.setNode = function(node) {
+        let index = this.app.nodes.indexOf(node);
+        this.combo.value = index;
+        this.node = node;
+    };
+    this.clear = function() {
+        let elements = this.svgtimeline.querySelectorAll(
+                            ".node-timeline-send, .node-timeline-receive");
+        for (elem of elements) {
+            this.svgtimeline.removeChild(elem);
+        }
+    };
+    this.add = function(type, start, end) {
+        let elem = document.createElementNS('http://www.w3.org/2000/svg', "path");
+        let cls, d, dStart, dEnd;
+        if (type == "Rx") {
+            cls = "node-timeline-receive";
+        }
+        else {
+            cls = "node-timeline-send";
+        }
+        dStart = (start - this.range.begin) * 100 / (this.range.end - this.range.begin);
+        dEnd = (end - this.range.begin) * 100 / (this.range.end - this.range.begin);
+        d = 'M' + Math.round(dStart*1000)/1000 + ',-1 L' + Math.round(dEnd*1000)/1000 + ',-1';
+        elem.setAttributeNS(null, 'class', cls);
+        elem.setAttributeNS(null, 'd', d);
+        this.svgtimeline.appendChild(elem);
+    };
+    this.setTimeRange = function(range) {
+        this.range = range;
+    };
+    /*
+    this.onStartDrag = function(mousePos) {
+        return { mouseStart:    mousePos.svg,
+                 valueStart:    this.value };
+    };
+    this.onDrag = function(info, mousePos) {
+        // compute mouse offset
+        let offset = mousePos.svg.y - info.mouseStart.y;
+        // compute and set new value
+        this.value = info.valueStart + offset / this.getSliderMaxY();
+        this.value = Math.max(0, this.value);
+        this.value = Math.min(1, this.value);
+        // redraw
+        this.redraw();
+    };
+    this.onEndDrag = function(info) {
+    };
+    this.autoSize = function() {
+        let div = this.svgslider.parentNode;
+        let viewbox = {}, area, component = { w: div.scrollWidth, h: div.scrollHeight }, c;
+        // compute size to preserve aspect ratio
+        viewbox.x = -5;
+        viewbox.y = -5;
+        viewbox.w = 10;
+        viewbox.h = Math.floor((component.h * viewbox.w) / component.w);
+        // update viewbox
+        this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
+        // redraw slider elements
+        this.redraw();
+    };
+    this.getSliderMaxY = function() {
+        return this.viewbox.height - 10;
+    };
+    this.redraw = function() {
+        this.sliderline.setAttributeNS(null, 'd', "M0,0 L0," + this.getSliderMaxY());
+        this.slidercircle.setAttributeNS(null, 'cy', this.value * this.getSliderMaxY());
+    };*/
+    this.onNodeSelect = function() {
+        this.node = this.app.nodes[this.combo.value];
+        this.view.reselectDuplicate(this);
+    };
+    this.combo.onchange = function() { thisTimeline.onNodeSelect(); }
+    this.updateNodes();
+    this.svgtimeline.addEventListener('mousedown', function(evt) {
+                        /*svgStartDrag(evt, thisTimeline);*/ console.log('TO DO'); });
+}
+
 function initSlider() {
     svgslider = document.querySelector("#svgslider");
     slider = new Slider(svgslider);
@@ -399,7 +503,7 @@ function Arrow(node1, node2) {
     this.node1 = node1;
     this.node2 = node2;
     this.paths = [];
-    for (svg of document.querySelectorAll(".svggraph")) {
+    for (let svg of document.querySelectorAll(".svggraph")) {
         let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttributeNS(null, 'class', 'arrow');
         this.paths.push(path);
@@ -428,7 +532,7 @@ function Arrow(node1, node2) {
         let d = "M" + (c1.x-centerx) + " " + (c1.y-centery);
         d += " l" + dx + " " + dy;
 
-        for (path of this.paths) {
+        for (let path of this.paths) {
             path.setAttributeNS(null, 'stroke-width', strokeWidth);
             path.setAttributeNS(null, 'd', d);
             path.setAttributeNS(null, 'transform', transform);
@@ -557,6 +661,146 @@ function TraceView() {
     return this;
 }
 
+function TimelineView(app) {
+    this.app = app;
+    this.expanded = false;
+    this.infos = null;
+    this.timelines = [];
+    this.timeRange = null;
+
+    this.expand = function() {
+        this.expanded = true;
+        displayOrHide("#timeline-box-expanded", true);
+        displayOrHide("#timeline-box-reduced", false);
+        this.autoSize();
+        if (this.trInfos != null) {
+            this.updateContent();
+        }
+    };
+
+    this.reduce = function() {
+        this.expanded = false;
+        displayOrHide("#timeline-box-expanded", false);
+        displayOrHide("#timeline-box-reduced", true);
+    };
+
+    this.update = function(infos) {
+        this.infos = infos;
+        if (this.expanded) {
+            this.updateContent();
+        }
+    };
+
+    this.updateContent = function() {
+        let timelinePerNodeLabel = {};
+        let tl;
+        for (tl of this.timelines) {
+            timelinePerNodeLabel[tl.node.label] = tl;
+            tl.clear();
+        }
+        this.setTimeRange();
+        for (let evt of this.infos.events)
+        {
+            tl = timelinePerNodeLabel[evt.node];
+            tl.add(evt.type, evt.begin, evt.end);
+        }
+    }
+
+    this.setTimeRange = function() {
+        for (tl of this.timelines) {
+            tl.setTimeRange(this.infos.view);
+        }
+    };
+
+    this.autoSize = function() {
+        /* if window is minimized, exit */
+        if (this.expanded == false) {
+            return;
+        }
+
+        let timelineBox = document.querySelector("#timeline-box-expanded");
+        let page = document.querySelector(".page");
+        let maxTimelineHeight = page.scrollHeight / 2;
+        let svgsContainer = document.querySelector(".node-timeline-svgs");
+        let firstSvg = svgsContainer.querySelector("svg"), svg;
+        let combosContainer = document.querySelector(".node-selectors");
+        let firstCombo = combosContainer.querySelector("select"), combo;
+        let num = combosContainer.querySelectorAll("select").length;
+
+        /* if we have nodes for the first time, init first timeline */
+        if (this.app.nodes.length > 0 && this.timelines.length == 0) {
+            firstSvg.classList.remove('no-display');
+            firstCombo.classList.remove('no-display');
+            this.createTimeline(firstCombo, firstSvg);
+        }
+
+        /* try to have one timeline for each node unless the timeline box reaches half screen height */
+        for (let i = num; i < this.app.nodes.length; i++) {
+            if (timelineBox.clientHeight > maxTimelineHeight) {
+                break;
+            }
+            svg = firstSvg.cloneNode(true);
+            svgsContainer.appendChild(svg);
+            combo = firstCombo.cloneNode(true);
+            combosContainer.appendChild(combo);
+            this.createTimeline(combo, svg);
+            num += 1;
+        }
+
+        /* now remove rows until the timeline height is lower than half screen height */
+        while (num > 0 && timelineBox.clientHeight > maxTimelineHeight) {
+            svgsContainer.removeChild(svgsContainer.querySelector("svg:last-of-type"));
+            combosContainer.removeChild(combosContainer.querySelector("select:last-of-type"));
+            this.timelines.pop();
+            num -= 1;
+        }
+    };
+
+    this.getDefaultTimelineNode = function() {
+        /* When we create a new timeline, we select a node
+           that is not currently selected by another timeline.
+           Then we sort possible nodes by their label and return
+           the first one.
+        */
+        let nodes = new Set(this.app.nodes);
+        for (let timeline of this.timelines)
+        {
+            nodes.delete(timeline.node);
+        }
+        let sortedNodes = Array.from(nodes).sort(function(n1, n2) {
+            return n1.label.localeCompare(n2.label);
+        });
+        return sortedNodes[0];
+    };
+
+    this.createTimeline = function(combo, svg) {
+        let node = this.getDefaultTimelineNode();
+        this.timelines.push(new Timeline(this.app, this, node, combo, svg));
+    };
+
+    this.updateNodes = function() {
+        for (let timeline of this.timelines) {
+            timeline.updateNodes();
+        }
+    };
+
+    this.reselectDuplicate = function(tl) {
+        for (let timeline of this.timelines) {
+            if (tl === timeline) {
+                continue;
+            }
+            if (tl.node !== timeline.node) {
+                continue;
+            }
+            // if we are here we have a duplicate
+            let node = this.getDefaultTimelineNode();
+            timeline.setNode(node);
+        }
+    };
+
+    return this;
+}
+
 function App() {
     this.nodes = [];
     this.arrows = [];
@@ -568,6 +812,7 @@ function App() {
         zoomNetGraph = initZoomNetGraph();
         traceview = new TraceView();
         slider = initSlider();
+        timelineView = new TimelineView(this);
         window.addEventListener('resize', function() { this_app.autoSize(); });
         autosizeButton.onclick = function() { this_app.autoSize(); };
     };
@@ -615,7 +860,7 @@ function App() {
     };
     this.setScaling = function(scaling) {
         this.scaling = scaling;
-        for (node of this.nodes) {
+        for (let node of this.nodes) {
             node.setScaling(scaling);
         }
     };
@@ -640,6 +885,8 @@ function App() {
         netGraph.resize(areaInfo, true);
         // resize zoom network view
         this.updateZoomView();
+        // resize timeline view
+        timelineView.autoSize();
     };
     this.updateZoomView = function() {
         let netGraphSize = netGraph.getContainerSize();
@@ -666,6 +913,7 @@ function App() {
         let n = new Node(x, y, label);
         this.nodes.push(n);
         this.autoSize();
+        timelineView.updateNodes();
         return n;
     };
     this.addArrow = function(n1, n2) {
@@ -688,6 +936,12 @@ function App() {
     };
     this.tracesBoxReduce = function() {
         traceview.reduce();
+    };
+    this.timelineBoxExpand = function() {
+        timelineView.expand();
+    };
+    this.timelineBoxReduce = function() {
+        timelineView.reduce();
     };
     this.init();
 }
@@ -722,6 +976,39 @@ function initJs() {
             message: 'OK sent'
         }
     ]); }, 500);
+
+    setTimeout(function(){ timelineView.update({
+        view: {
+            begin: 1557126302.334,
+            end: 1557126307.366
+        },
+        events: [
+            {
+                type: 'Tx',
+                node: 'N2',
+                begin: 1557126305.334,
+                end: 1557126305.366
+            },
+            {
+                type: 'Rx',
+                node: 'N1',
+                begin: 1557126305.338,
+                end: 1557126305.370
+            },
+            {
+                type: 'Tx',
+                node: 'N3',
+                begin: 1557126306.334,
+                end: 1557126306.366
+            },
+            {
+                type: 'Rx',
+                node: 'N1',
+                begin: 1557126306.338,
+                end: 1557126306.370
+            }
+        ]}
+    ); }, 12500);
 
     var ws = new WebSocket("ws://localhost:8080/websocket");
     ws.onopen = function() {

@@ -1,12 +1,16 @@
 <html style="height:100%;">
     <head>
         <meta charset="UTF-8" />
-        <script src="netview.js"></script>
+        <script src="js/tools.js"></script>
+        <script src="js/netgraph.js"></script>
+        <script src="js/timeline.js"></script>
+        <script src="js/traces.js"></script>
+        <script src="js/app.js"></script>
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"/>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.1/css/all.min.css" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="netview.css">
     </head>
-    <body onload="initJs()">
+    <body onload="app.init()">
         <div class="page page-column">
             <div class="top-page-row page-row">
                 <div id="netcol" class="page-span">

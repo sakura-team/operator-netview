@@ -105,7 +105,7 @@ function svgStartDrag(evt, elem) {
         return;
     }
     let svg = evt.target;
-    while (svg.tagName != 'svg') {
+    while (svg != null && svg.tagName != 'svg') {
         svg = svg.parentNode;
     }
     let mousePos = getMousePosition(evt, svg);
@@ -140,13 +140,16 @@ function pixelsToSvg(ctm, x, y) {
 }
 
 function getMousePosition(evt, svg) {
-    return {
+    let position = {
         pixels: {
             x: evt.clientX,
             y: evt.clientY
         },
-        svg: pixelsToSvg(svg.getScreenCTM(), evt.clientX, evt.clientY)
     };
+    if (svg != null) {
+        position.svg = pixelsToSvg(svg.getScreenCTM(), evt.clientX, evt.clientY);
+    }
+    return position;
 }
 
 function Node(x, y, label) {
@@ -446,51 +449,12 @@ function Timeline(app, view, node, combo, svgtimeline) {
     this.setTimeRange = function(range) {
         this.range = range;
     };
-    /*
-    this.onStartDrag = function(mousePos) {
-        return { mouseStart:    mousePos.svg,
-                 valueStart:    this.value };
-    };
-    this.onDrag = function(info, mousePos) {
-        // compute mouse offset
-        let offset = mousePos.svg.y - info.mouseStart.y;
-        // compute and set new value
-        this.value = info.valueStart + offset / this.getSliderMaxY();
-        this.value = Math.max(0, this.value);
-        this.value = Math.min(1, this.value);
-        // redraw
-        this.redraw();
-    };
-    this.onEndDrag = function(info) {
-    };
-    this.autoSize = function() {
-        let div = this.svgslider.parentNode;
-        let viewbox = {}, area, component = { w: div.scrollWidth, h: div.scrollHeight }, c;
-        // compute size to preserve aspect ratio
-        viewbox.x = -5;
-        viewbox.y = -5;
-        viewbox.w = 10;
-        viewbox.h = Math.floor((component.h * viewbox.w) / component.w);
-        // update viewbox
-        this.setViewBox(viewbox.x, viewbox.y, viewbox.w, viewbox.h);
-        // redraw slider elements
-        this.redraw();
-    };
-    this.getSliderMaxY = function() {
-        return this.viewbox.height - 10;
-    };
-    this.redraw = function() {
-        this.sliderline.setAttributeNS(null, 'd', "M0,0 L0," + this.getSliderMaxY());
-        this.slidercircle.setAttributeNS(null, 'cy', this.value * this.getSliderMaxY());
-    };*/
     this.onNodeSelect = function() {
         this.node = this.app.nodes[this.combo.value];
         this.view.reselectDuplicate(this);
     };
     this.combo.onchange = function() { thisTimeline.onNodeSelect(); }
     this.updateNodes();
-    this.svgtimeline.addEventListener('mousedown', function(evt) {
-                        /*svgStartDrag(evt, thisTimeline);*/ console.log('TO DO'); });
 }
 
 function initSlider() {
@@ -673,7 +637,7 @@ function TimelineView(app) {
         displayOrHide("#timeline-box-expanded", true);
         displayOrHide("#timeline-box-reduced", false);
         this.autoSize();
-        if (this.trInfos != null) {
+        if (this.infos != null) {
             this.updateContent();
         }
     };
@@ -798,6 +762,39 @@ function TimelineView(app) {
         }
     };
 
+    this.onStartDrag = function(mousePos) {
+        console.log('timeline start drag');
+        let svgsContainer = document.querySelector(".node-timeline-svgs");
+        let rect = svgsContainer.getBoundingClientRect();
+        let factor = (this.infos.view.end - this.infos.view.begin) /
+                     (rect.right - rect.left);
+        return { mouseStartX: mousePos.pixels.x,
+                 timeRangeStart: {
+                    begin: this.infos.view.begin,
+                    end: this.infos.view.end
+                 },
+                 factor: factor };
+    };
+    this.onDrag = function(info, mousePos) {
+        // compute offset
+        let xOffset = mousePos.pixels.x - info.mouseStartX;
+        let timeOffset = xOffset * info.factor;
+        // compute and set new time range
+        this.infos.view.begin = info.timeRangeStart.begin - timeOffset;
+        this.infos.view.end = info.timeRangeStart.end - timeOffset;
+        console.log(mousePos.pixels.x, this.infos.view);
+        // redraw
+        this.updateContent();
+    };
+    this.onEndDrag = function(info) {
+    };
+    let svgsContainer = document.querySelector(".node-timeline-svgs");
+    let saved_this = this;
+    svgsContainer.addEventListener('mousedown', function(evt) {
+        if (saved_this.infos != null) {
+            svgStartDrag(evt, saved_this);
+        }
+    });
     return this;
 }
 

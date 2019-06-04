@@ -1,4 +1,6 @@
 
+TIMELINE_ZOOM_FACTOR = 1.1;
+
 function Timeline(app, view, node, combo, svgtimeline) {
     this.app = app;
     this.view = view;
@@ -70,6 +72,7 @@ function TimelineView(app) {
     this.infos = null;
     this.timelines = [];
     this.timeRange = null;
+    this.svgsContainer = document.querySelector(".node-timeline-svgs");
 
     this.expand = function() {
         this.expanded = true;
@@ -124,8 +127,7 @@ function TimelineView(app) {
         let timelineBox = document.querySelector("#timeline-box-expanded");
         let page = document.querySelector(".page");
         let maxTimelineHeight = page.scrollHeight / 2;
-        let svgsContainer = document.querySelector(".node-timeline-svgs");
-        let firstSvg = svgsContainer.querySelector("svg"), svg;
+        let firstSvg = this.svgsContainer.querySelector("svg"), svg;
         let combosContainer = document.querySelector(".node-selectors");
         let firstCombo = combosContainer.querySelector("select"), combo;
         let num = combosContainer.querySelectorAll("select").length;
@@ -143,7 +145,7 @@ function TimelineView(app) {
                 break;
             }
             svg = firstSvg.cloneNode(true);
-            svgsContainer.appendChild(svg);
+            this.svgsContainer.appendChild(svg);
             combo = firstCombo.cloneNode(true);
             combosContainer.appendChild(combo);
             this.createTimeline(combo, svg);
@@ -152,7 +154,7 @@ function TimelineView(app) {
 
         /* now remove rows until the timeline height is lower than half screen height */
         while (num > 0 && timelineBox.clientHeight > maxTimelineHeight) {
-            svgsContainer.removeChild(svgsContainer.querySelector("svg:last-of-type"));
+            this.svgsContainer.removeChild(this.svgsContainer.querySelector("svg:last-of-type"));
             combosContainer.removeChild(combosContainer.querySelector("select:last-of-type"));
             this.timelines.pop();
             num -= 1;
@@ -203,8 +205,7 @@ function TimelineView(app) {
 
     this.onStartDrag = function(mousePos) {
         console.log('timeline start drag');
-        let svgsContainer = document.querySelector(".node-timeline-svgs");
-        let rect = svgsContainer.getBoundingClientRect();
+        let rect = this.svgsContainer.getBoundingClientRect();
         let factor = (this.infos.view.end - this.infos.view.begin) /
                      (rect.right - rect.left);
         return { mouseStartX: mousePos.pixels.x,
@@ -227,11 +228,36 @@ function TimelineView(app) {
     };
     this.onEndDrag = function(info) {
     };
-    let svgsContainer = document.querySelector(".node-timeline-svgs");
+    this.zoom = function(evt) {
+        // compute zoom center (= mouse position)
+        let timeRange = this.infos.view;
+        let xCenter = getMousePosition(evt, null).pixels.x;
+        let rect = this.svgsContainer.getBoundingClientRect();
+        let ratioCenter = (xCenter - rect.left) / (rect.right - rect.left);
+        let timeCenter = timeRange.begin + ratioCenter * (timeRange.end - timeRange.begin);
+        // compute zoom factor
+        let factor;
+        if (evt.deltaY < 0) {
+            factor = 1 / TIMELINE_ZOOM_FACTOR;
+        }
+        else {
+            factor = TIMELINE_ZOOM_FACTOR;
+        }
+        // compute and set new time range
+        timeRange.begin = timeCenter - factor * (timeCenter - timeRange.begin);
+        timeRange.end = timeCenter + factor * (timeRange.end - timeCenter);
+        // redraw
+        this.updateContent();
+    };
     let saved_this = this;
-    svgsContainer.addEventListener('mousedown', function(evt) {
+    this.svgsContainer.addEventListener('mousedown', function(evt) {
         if (saved_this.infos != null) {
             svgStartDrag(evt, saved_this);
+        }
+    });
+    this.svgsContainer.addEventListener('wheel', function(evt) {
+        if (saved_this.infos != null) {
+            saved_this.zoom(evt);
         }
     });
     return this;

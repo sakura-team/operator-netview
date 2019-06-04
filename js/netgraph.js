@@ -4,7 +4,7 @@ ARROW_MARGIN = 7;
 LABEL_OFFSET_Y = 6;
 ARROW_MIN_LENGTH = 10;
 DEFAULT_STROKE_WIDTH = 3;
-ZOOM_FACTOR = 1.1;
+GRAPH_ZOOM_FACTOR = 1.1;
 
 function Node(x, y, label) {
     this.circles = [];
@@ -173,10 +173,10 @@ function NetGraph(svggraph) {
         // center zooming on mouse position
         let mouse = getMousePosition(evt, this.svggraph).svg;
         if (evt.deltaY > 0) {
-            factor = 1 / ZOOM_FACTOR;
+            factor = 1 / GRAPH_ZOOM_FACTOR;
         }
         else {
-            factor = ZOOM_FACTOR;
+            factor = GRAPH_ZOOM_FACTOR;
         }
         return app.zoom({ center: mouse, factor: factor });
     };

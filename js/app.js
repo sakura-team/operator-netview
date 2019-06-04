@@ -6,6 +6,7 @@ function App() {
     this.nodes = [];
     this.arrows = [];
     this.scaling = null;
+    this.ws = null;
     this.init = function() {
         let autosizeButton = document.querySelector("#zoom-autosize-btn");
         let this_app = this;
@@ -16,14 +17,20 @@ function App() {
         timelineView = new TimelineView(this);
         window.addEventListener('resize', function() { this_app.autoSize(); });
         autosizeButton.onclick = function() { this_app.autoSize(); };
-        var ws = new WebSocket("ws://localhost:8080/websocket");
-        ws.onopen = function() {
-            ws.send("Hello, world");
+        this.ws = new WebSocket("ws://localhost:8080/websocket");
+        this.ws.onerror = function() {
+            console.log('ERROR');
         };
-        ws.onmessage = function (evt) {
-            console.log('ws message:', evt.data);
-        };
+        this.ws.onopen = function() { this_app.onWebsocketOpen(); };
+        this.ws.onmessage = function(evt) { this_app.onWebsocketMessage(evt); };
         this.autoSize();
+    };
+    this.onWebsocketOpen = function() {
+        this.ws.send(JSON.stringify({ type: 'init' }));
+    };
+    this.onWebsocketMessage = function(evt) {
+        let msg = JSON.parse(evt.data);
+        console.log('ws message:', msg);
     };
     this.analyseAreaUsage = function(points, limits) {
         let area = {}, bounds;
